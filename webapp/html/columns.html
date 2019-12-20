@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+    .reportSentencesDiv {
+        border-style: groove;
+        margin-left: 80px;
+        padding-top: 10px;
+    }
+
+	a:hover {
+  	background-color: #ffffbd;
+	}
+</style>
+
+<br>
+
+<h3 class="display-4 text-center">{{ file }}</h3>
+
+<div class="row justify-content-center pb-3">
+    <div class="col-md-auto">
+        <button onclick="$.getJSON('/export/{{file}}', (x) => {pdfMake.createPdf(x).download();})" class="btn btn-md btn-outline-secondary">Export PDF</button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col reportSentencesDiv">
+        {% for sentence in sentences %}
+        {% if sentence.found_status == 'true' %}
+                <a class="bg-warning" id="sentence{{sentence.uid}}" onclick="sentenceContext({{sentence.uid}})">{{ sentence.text }}</a>
+        {% else %}
+        <a id="sentence{{sentence.uid}}" onclick="sentenceContext({{sentence.uid}})">{{ sentence.text }}</a>
+        {% endif %}
+        <br><br>
+        {% endfor %}
+    </div>
+    <div class="col col-sm-4 ">
+        <div class='missingTechniquesView' id='sentenceContextSection'>
+                <span class='spanMissingTechniqueView'>
+                    Techniques Found
+                </span>
+            <br><br>
+            <div id="sentenceInformation">
+                <table id="tableSentenceInfo" class="table">
+                    <tbody>
+
+                    </tbody>
+                </table>
+            </div>
+            <br><br>
+            <span class='spanMissingTechniqueView'>
+                    Confirmed Techniques
+                </span>
+            <br><br>
+            <div id="confirmedsentenceInformation">
+                <table id="confirmedSentenceInfo" class="table">
+                    <tbody>
+
+                    </tbody>
+                </table>
+            </div>
+            <hr><br><br>
+             <span class='spanAddMissingTechnique'>
+                    Add A Missing Technique
+                </span> <br><br>
+            <div class="container">
+                <div class="row-fluid">
+                  <select id="missingTechniqueSelect" class="selectpicker" data-show-subtext="true" data-live-search="true">
+                      {% for tech in attack_uids %}
+                    <option style="overflow: visible" value="{{tech.uid}}">{{tech.name}}</option>
+                      {% endfor %}
+                  </select>
+                </div>
+        </div>
+            <br>
+            &nbsp;&nbsp;&nbsp;<button onclick="addMissingTechnique()" class="btn btn-md btn-outline-primary">Add Technique</button> <br><br>
+        </div>
+
+
+
+        <br><br>
+        <br><br>
+
+
+    </div>
+</div>
+
+
+
+{% endblock %}

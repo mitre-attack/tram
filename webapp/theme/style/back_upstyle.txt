@@ -1,0 +1,1245 @@
+/* FONTS */
+  @font-face {
+    font-family: 'Roboto-Thin';
+    font-style: normal;
+    font-weight: 100;
+    src: url(../fonts/Roboto/Roboto-Thin.ttf);
+  }
+
+  @font-face {
+    font-family: 'Roboto-Light';
+    font-style: normal;
+    font-weight: 300;
+    src: url(../fonts/Roboto/Roboto-Light.ttf);
+  }
+
+  @font-face {
+    font-family: 'Roboto-Regular';
+    font-style: normal;
+    font-weight: 400;
+    src: url(../fonts/Roboto/Roboto-Regular.ttf);
+  }
+
+  @font-face {
+    font-family: 'Roboto-Medium';
+    font-style: normal;
+    font-weight: 500;
+    src: url(../fonts/Roboto/Roboto-Medium.ttf);
+  }
+
+  @font-face {
+    font-family: 'Roboto-Bold';
+    font-style: normal;
+    font-weight: 700;
+    src: url(../fonts/Roboto/Roboto-Bold.ttf);
+  }
+
+  @font-face {
+    font-family: 'Roboto-Black';
+    font-style: normal;
+    font-weight: 900;
+    src: url(../fonts/Roboto/Roboto-Black.ttf);
+  }
+
+  @font-face{
+    font-family: 'AlegreyaSans-Regular';
+    font-style: normal;
+    font-weight: 400;
+    src: url(../fonts/Alegreya_Sans/AlegreyaSans-Regular.ttf);
+  }
+
+/*Overall styling*/
+  body {
+    height: 100%;
+    color:#39434C;
+    font-family: 'Roboto-Regular', sans-serif;
+  }
+  h1{
+    font-family: 'Roboto-Regular', sans-serif;
+  }
+  h2{
+    font-family: 'Roboto-Light', sans-serif;
+  }
+
+/*Override some bootstrap defaults*/
+  .jumbotron{
+    padding: 0;
+  }
+  .faq{
+    line-height: 2rem;
+  }
+
+/*Navigation and links*/
+  .navbar-orange{
+    background-color: #317b22;
+    background-color: #c63f1e;
+  }
+  .navbar-orange > a > .nav-link{
+    color: white;
+  }
+  .nav-tabs{
+    border-bottom: none;
+  }
+  .nav-tabs .nav-link {
+    color: white;
+    font-family: 'Roboto-Light', sans-serif;
+  }
+  .nav-tabs .nav-link:focus, .nav-tabs .nav-link.active {
+    color: white;
+    border: none;
+    border-top-left-radius: 0rem;
+    border-top-right-radius: 0rem;
+    background-color: #062f4f;
+  }
+   .nav-tabs .nav-link:hover{
+    color: #062f4f;
+    border: none;
+    border-top-left-radius: 0rem;
+    border-top-right-radius: 0rem;
+    background-color: transparent;
+   }
+  .nav-link{
+    font-size: 1rem;
+    padding: .3rem 1rem;
+    color: #596877;
+  }
+  .nav-link.expand-title{
+    font-size: 1.2rem;
+    color: black;
+  }
+  .nav-link.side:hover {
+    background-color: #317b22;
+    background-color: #c63f1e;
+    color: white;
+  }
+  .nav-link.side.active{
+    background-color:#f3f3f3;
+    color: #317b22;
+    color: #c63f1e;
+    border-right: 3px solid #317b22;
+    border-right: 3px solid #c63f1e;
+  }
+  .nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
+    color:  #fff;
+    background-color: #062f4f;
+    border-color: transparent;
+  }
+  .dropdown-item:focus, .dropdown-item:hover {
+    color: #062f4f;
+    text-decoration: none;
+    background-color: transparent;
+  }
+  .dropdown-item{
+    color: #fff;
+  }
+  
+  .dropdown-menu{
+    background-color: #317b22;
+    background-color: #c63f1e;
+  }
+  .dropdown:hover>.dropdown-menu {
+    display: block;
+  }
+  .breadcrumb{
+    background-color: white;
+  }
+  .heading{
+    font-size: 1.6rem;
+    color: #596877;
+    letter-spacing: 3px;
+  }
+  .heading-dropdown{
+    font-size: 1.2rem;
+    color: #062f4f;
+    letter-spacing: 3px;
+  }
+  .expand-all{
+    background-image: url('../images/expand-all-normal.svg');
+    height: 30px;
+    width: 30px;
+    background-size: contain;
+  }
+  a{
+    color: #4F7CAC;
+  }
+
+/*colors*/
+  .gray-text{
+    color: #99958F;
+  }
+  .bg-orange{
+    /*ATT&CK Evals Green*/
+    background-color: #317b22;
+    background-color: #c63f1e;
+    
+    color: white;
+  }
+  .bg-light{
+    background-color: #f3f3f3 !important;
+  }
+  .bg-navy{
+    background-color: #062f4f;
+  }
+
+/*buttons*/
+  .btn-default{
+    border-color: gray;
+  }
+  .btn-navy {
+    color: #fff;
+    background-color: #062f4f;
+    border-color: 1px solid #062f4f;
+  }
+  .btn-navy:hover{
+    color: #fff;
+    background-color: #1C415F;
+    background-image: none;
+    border-color: 1px solid #062f4f;
+
+  }
+
+/*tables*/
+  table  {
+    empty-cells: hide;
+  }
+  .table-light{
+    background-color: #f3f3f3;
+  }
+
+/*footer*/
+  .footer > .container-fluid{
+    padding-right: 0!important;
+    padding-left: 0!important;
+  }
+  .footer{
+    background-color: #062f4f;
+    color:white;
+    font-family: 'Roboto-Thin', sans-serif;
+  }
+
+@media only screen and (max-width: 1450px) {
+    .heading-dropdown{
+      font-size: 1rem;
+      color: #062f4f;
+      letter-spacing: 1px;
+    }
+    .heading{
+      font-size: 1.2rem;
+      color: #596877;
+      letter-spacing: 3px;
+    }
+}
+
+/*base.html*/
+#content{
+  margin: 20px;
+  width: 100%;
+}
+
+.spanBreadcrumbs{
+  font-size: 13px;
+}
+
+/*results.html*/
+
+.labSubheader-results, .labSubheader-evalsummary, .labSubheader-tacticsummary
+{
+  font-size: 24px;
+}
+
+.divEvalCards-results
+{
+  width: 100%;
+  display: block;
+}
+
+.EvalCard-results
+{
+  transition: all .5s ease;
+
+  height: 310px;
+  width: 310px;
+  background-size: auto;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 20px;
+  float: left;
+  border: 3px solid lightgray;
+  border-radius: 10px;
+
+  -webkit-animation: fadeIn 1s;
+  animation: fadeIn 1s;
+}
+
+.EvalCard-results:hover
+{
+  transition: all .5s ease;
+  border: 3px solid #317b22;
+  border: 3px solid #c63f1e;
+}
+
+.labEvalName-results
+{
+  color: black;
+  font-size: 13px;
+  float: left;
+}
+
+.labDateStamp-results
+{
+  color: black;
+  font-size: 13px;
+  float: right;
+}
+
+.divLogo-results
+{
+  text-align: center;
+  height: 200px;
+}
+
+.vendorlogo-results
+{
+    max-width: 95%;
+    max-height: 90%;
+    /*height: 80%;*/
+}
+
+.divTags-results
+{
+  width: 100%;
+}
+
+.divTag-results
+{
+  font-family: 'Roboto';
+  color: black;
+  font-size: 10px;
+  float: left;
+  border-radius: 5px;
+  background-color: #f3f3f3;
+  text-align: center;
+  border: 1px solid gray;
+  margin: 2px;
+  padding: 3px;
+}
+
+#txtSearch-results
+{
+  font-size: 16px;
+  width: 300px;
+  border-radius: 0px;
+  border-right: none;
+}
+
+#btnSearch-results
+{
+  border-radius: 0px;
+  border: 1px solid black;
+}
+
+#imgSearch-results
+{
+  width: 10%;
+  height: 10%;
+}
+
+#imgSearch-results:hover
+{
+  cursor: pointer;
+}
+
+#btnRound-results
+{
+  background-color: transparent;
+  text-decoration: underline;
+  font-size: 24px;
+}
+
+#spanRound-results{
+  text-decoration: underline;
+  font-size: 24px;
+}
+
+#btnlabEvaluations-results
+{
+  background-color: transparent;
+  border: none;
+  color: black; 
+  font-size: 24px;
+}
+
+#labSearchResults-results
+{
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.spanRoundLabel-results
+{
+  font-size: 22px;
+}
+
+.spanRoundTr-results
+{
+    -webkit-animation: fadeIn 1s;
+    animation: fadeIn 1s;
+}
+
+.spanPageDescription-evalsummary
+{
+  font-size: 12px;  
+}
+
+.divEvaluationSummaryBody, .divProcedureSummaryBody
+{
+  width: 95%; 
+  margin: 0 auto;
+  padding-top: 20px;
+}
+
+.divTag-evalsummary, .divTag-tacticsummary
+{
+  font-family: 'Roboto';
+  color: black;
+  font-size: 10px;
+  float: right;
+  border-radius: 5px;
+  background-color: #f3f3f3;
+  text-align: center;
+  border: 1px solid gray;
+  margin: 2px;
+  padding: 3px;
+}
+
+.divPageDescription
+{
+  width:50%;
+}
+
+.pPageDescription
+{
+  margin: 0px;
+}
+
+.tableMatrixLegendExport, .divMatrix
+{
+  width: 100%;
+}
+
+.tdMatrixLabel
+{
+  width: 20%; 
+  text-align: left;
+}
+
+.spanMatrixLabel
+{
+  font-size: 20px;
+}
+
+.tdLegendExport
+{
+  width: 80%; 
+  text-align: right;
+}
+
+.aLegendExport
+{
+  font-size: 13px;
+}
+
+.trTactics-evalsummary, .aTactic-evalsummary
+{
+  font-family: : 'Roboto', Impact, sans-serif;
+  font-size: 13px;
+  color: white;
+  background-color: #666666;
+  text-align: center;
+}
+
+.aTactic-evalsummary:hover
+{
+  color: white;
+}
+
+.tdTechnique-evalsummary, .tdInScopeTechnique-evalsummary
+{
+  border: 1px solid lightgrey;
+  padding: 2px;
+  text-align: center;
+}
+
+.tdInScopeTechnique-evalsummary:hover
+{  
+  /*border: 2px solid #317b22;*/
+  /*border: 2px solid #c63f1e;*/
+  outline: 2px solid #c63f1e;
+}
+
+.spanTechnique-evalsummary
+{
+  font-size: 10px;
+  color: lightgrey;
+}
+
+.aInScopeTechnique-evalsummary, .spanTechnique-evalsummary
+{
+  font-size: 10px;
+  display:block;
+}
+
+#tableMatrix a .spanPopup-evalsummary
+{
+  display: none;
+}
+
+#tableMatrix a .spanEdgePopup
+{
+  display: none;
+}
+
+#tableMatrix a:hover .spanPopup-evalsummary
+{
+  display: block;
+  position: absolute;
+
+  margin: 0px;
+  padding: 10px;
+  color: black;
+  font-weight: normal;
+  background: white;
+  text-align: left;
+  border: 1px solid #666;
+  z-index: 2;
+
+  cursor: default;
+}
+
+#tableMatrix a:hover .spanEdgePopup
+{
+  display: block;
+  position: absolute;
+
+  right: 0;
+
+  margin: 0px;
+  padding: 10px;
+  color: black;
+  font-weight: normal;
+  background: white;
+  text-align: left;
+  border: 1px solid #666;
+  z-index: 2;
+
+  cursor: default;
+}
+
+.aPopupMore-evalsummary
+{
+  z-index: 1;
+}
+
+.tablePopup-evalsummary, .thPopup-evalsummary, .tdPopup-evalsummary, .tdPopupMore-evalsummary, .tablePopupDetectionIcons-evalsummary, .tdPopupDetectionIcons-evalsummary 
+{
+  border: none; 
+}
+
+.thPopup-evalsummary, .tdPopup-evalsummary, .tdPopupStep-evalsummary, .tdPopupProcedure-evalsummary
+{
+  padding: 8px;
+  font-size: 13px;
+}
+
+.tdPopupStep-evalsummary
+{
+  max-width: 70px;
+}
+
+.tdPopupProcedure-evalsummary
+{
+  max-width: 200px;
+
+   /* These are technically the same, but use both */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+
+  /*-ms-word-break: break-all;*/
+  /* This is the dangerous one in WebKit, as it breaks things wherever */
+  /*word-break: break-all;*/
+  /* Instead use this non-standard one: */
+  word-break: break-word;
+}
+
+.thPopup-evalsummary
+{
+  font-weight: bold;
+}
+
+.tablePopupDetectionIcons-evalsummary
+{
+
+}
+
+.tdPopupDetectionIcons-evalsummary
+{
+  padding: 5px;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+.tdPopupMore-evalsummary
+{
+  text-align: center;
+}
+
+.divDetectionLegend
+{
+  text-align: center;
+}
+
+.spanDetectionLegend
+{
+  font-size: 18px;
+  font-family: 'Roboto', Impact;
+}
+
+.tableDetectionLegend
+{
+  text-align: center;
+  width: 90%;
+  margin: 0 auto;
+}
+
+.tdDetectionLegend
+{
+  padding: 5px;
+}
+
+.spanDetectionLegendIconDescription
+{
+  font-size: 13px;
+  font-family: 'Roboto', Impact;
+}
+
+.divDetectionIcon
+{
+  padding: 5px;
+}
+
+.DetectionIcon
+{
+  max-width: 20px;
+}
+
+.pDetectionLegendDescription
+{
+  line-height: 1px;
+}
+
+.tableMain-tacticsummary
+{
+  width: 100%;
+}
+
+.tdMainLeftPane-tacticsummary
+{
+  width: 75%;
+  vertical-align: top;
+  padding-right: 10px;
+}
+
+.tdMainRightPane-tacticsummary
+{
+  width: 25%;
+  height: 1px;
+  vertical-align: top;
+}
+
+.tableHeaderLegend-tacticsummary
+{
+  width: 100%;
+  vertical-align: top;
+  margin-top: 15px;
+}
+
+.tdMainLabel-tacticsummary
+{
+  width: 95%;
+}
+
+.tdLegend-tacticsummary
+{
+  width: 5%;
+  text-align: right;
+}
+
+.divOperationalFlow-tacticsummary
+{
+  background-color: #00334f;
+  position: sticky;
+  right: 20px;
+  top: 100px;
+
+  max-width: 400px;
+  max-height: 720px;
+
+  overflow: auto;
+  padding: 10px;
+}
+
+.aTechnique-tacticsummary
+{
+  font-size: 14px;
+}
+
+.tableHeaderBar-tacticsummary
+{
+  width: 100%;
+  height: 50px;
+}
+
+.tr1
+{
+  text-align: center;
+}
+
+.trHeaderBar-tacticsummary
+{
+  font-family: : 'Roboto', Impact, sans-serif;
+  font-size: 13px;
+  color: white;
+  background-color: #666666;
+  text-align: center; 
+}
+
+.td1AHeader
+{
+  width: 17%;
+}
+
+.td2TechniqueHeader-tacticsummary
+{
+  font-size: 13px; 
+}
+
+.td1B
+{
+  width: 83%; 
+  border-collapse: collapse;
+  padding: 0px;
+}
+
+.td2ProceduresHeader-tacticsummary
+{
+  width: 18%;
+  font-size: 13px;
+}
+
+.td2StepsHeader-tacticsummary
+{
+  width: 7%;
+  font-size: 13px;
+}
+
+.tdDetectionTypesAndNotesHeader-tacticsummary
+{
+  width: 50%;
+}
+
+.tdDetectionTypeHeader-tacticsummary
+{
+  width: 40%; 
+  font-size: 13px;
+}
+
+.tdDetectionNotesHeader-tacticsummary
+{
+  width: 60%;
+  font-size: 13px;
+}
+
+.td2ScreenshotsHeader-tacticsummary
+{
+  width: 25%;
+  font-size: 13px;
+}
+
+
+/* Summary Items */
+.table1
+{
+  width: 100%;
+  border: 3px solid lightgray;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  outline: 0px solid #c63f1e;
+
+  transition: all .2s ease;
+
+  /*transition: all .5s ease;*/
+}
+
+.table1:hover
+{
+  /*border: 4px solid #c63f1e;*/
+  outline: 3px solid #c63f1e;
+  transition: all .2s ease;
+}
+
+.td1A
+{
+  width: 17%; 
+  border: 3px solid lightgray;
+  font-size: 10px;
+}
+
+.table2
+{
+  width: 100%;
+}
+
+.tr2
+{
+  text-align: center;
+  border-bottom: 3px solid lightgray;
+}
+
+.tr2NoBottomBorder
+{
+  text-align: center;
+}
+
+.td2
+{
+
+}
+
+.td2Technique
+{
+  width: 100%; 
+}
+
+.td2Procedures
+{
+  width: 18%;
+  font-size: 10px;
+  border-right: 3px solid lightgray;
+  padding: 0px;
+}
+
+.td2Steps
+{
+  width: 7%;
+  font-size: 10px;
+  border-right: 3px solid lightgray;
+}
+
+.td2DetectionTypesAndNotes
+{ 
+  width: 50%;
+  font-size: 10px;
+  border-right: 3px solid lightgray;
+  padding: 0px;
+  height: 1px;
+}
+
+.td2Screenshots
+{
+  width: 25%;
+  font-size: 10px;
+}
+
+.tdInnerScreenshots
+{
+  font-size: 10px;
+}
+
+.table3
+{
+  margin: 0 auto;
+}
+
+.tableScreenshot3
+{
+  text-align: left;
+  height: 100%;
+  padding-left: 10px;
+}
+
+.td3
+{
+  /*border: 1px solid black;*/
+  font-size: 10px;
+  max-width: 130px;
+
+   /* These are technically the same, but use both */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+
+  /*-ms-word-break: break-all;*/
+  /* This is the dangerous one in WebKit, as it breaks things wherever */
+  /*word-break: break-all;*/
+  /* Instead use this non-standard one: */
+  word-break: break-word;
+}
+
+.tableSummaryDetectionIcons
+{
+  display: inline-block;
+  font-size: 10px;
+}
+
+.tdSummaryDetectionIcons
+{
+}
+
+.tableDetectionTypesAndNotes
+{
+  width: 100%;
+  border: none;
+  height: 100%;
+}
+
+.tdDetectionType
+{
+  width: 40%;
+  font-size: 10px;
+  border-right: 3px solid lightgray;
+  padding: 0px;
+}
+
+.tdDetectionTypeDotted
+{
+  width: 40%;
+  font-size: 10px;
+  border-right: 3px solid lightgray;
+  border-bottom: 3px dotted lightgray;
+  padding: 0px; 
+}
+
+.tdDetectionNotes
+{
+  width: 60%;
+  font-size: 10px;
+  padding: 0px;
+}
+
+.tdInnerDetectionNotes
+{
+  font-size: 10px;
+}
+
+.tdDetectionNotesDotted
+{
+  width: 60%;
+  font-size: 10px;
+  border-bottom: 3px dotted lightgray;
+  padding: 0px; 
+}
+
+.spanOperationalFlow-tacticsummary
+{
+  font-size: 30px;
+  color: white;
+  padding-left: 5px;
+}
+
+.pOFStep
+{
+  padding-top: 40px;
+  padding-left: 10px;
+  font-size: 20px;
+  color: white;
+}
+
+.pOFSubstep
+{
+  padding-left: 50px;
+  font-size: 18px;
+  color: white;
+  line-height: 20px;
+}
+
+.pOFTechniques
+{
+  padding-left: 75px;
+  font-size: 16px;
+  color: white;
+  line-height: 20px;
+}
+
+.pOFProcedure
+{
+  padding-left: 100px;
+  font-size: 14px;
+  color: white;
+  line-height: 20px;
+
+  /* These are technically the same, but use both */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+
+  /*-ms-word-break: break-all;*/
+  /* This is the dangerous one in WebKit, as it breaks things wherever */
+  /*word-break: break-all;*/
+  /* Instead use this non-standard one: */
+  word-break: break-word;
+}
+
+.divInScopeSubstep
+{
+  /*background-color: #c63f1e;*/
+  background-color: white;
+}
+
+.divInScopeSubstep .pOFSubstep, .divInScopeSubstep .pOFTechniques, .divInScopeSubstep .pOFProcedure
+{
+  color: #062f4f;
+}
+
+/*.td3
+{
+  background-color: orange;
+  padding: 3px;
+}
+*/
+/*.spanScreenshotCaption-tacticsummary
+{
+
+}*/
+
+.tdAllHeaders-techniquesummary
+{
+  width: 100%; 
+  border-collapse: collapse;
+  padding: 0px; 
+}
+
+.td2ProceduresHeader-techniquesummary
+{
+  width: 19%;
+}
+
+.td2StepsHeader-techniquesummary
+{
+  width: 7%;
+}
+
+.tdDetectionTypesAndNotesHeader-techniquesummary
+{
+  width: 42%;
+}
+
+.td2ScreenshotsHeader-techniquesummary
+{
+  width: 32%;
+}
+
+.tr2NoBottomBorder-techniquesummary
+{
+  text-align: center; 
+}
+
+.td2Procedures-techniquesummary
+{
+  width: 19%;
+  font-size: 10px;
+  border-right: 3px solid lightgray;
+  padding: 0px;  
+}
+
+.td2Steps-techniquesummary
+{
+  width: 7%;
+  font-size: 10px;
+  border-right: 3px solid lightgray; 
+}
+
+.td2DetectionTypesAndNotes-techniquesummary
+{
+  width: 42%;
+  font-size: 10px;
+  border-right: 3px solid lightgray;
+  padding: 0px;
+  height: 1px; 
+}
+
+.tableDetectionTypesAndNotes-techniquesummary
+{
+  width: 100%;
+  border: none;
+  height: 100%;
+}
+
+.trDetectionTypesAndNotes-techniquesummary
+{  
+}
+
+.tdDetectionTypeDotted-techniquesummary
+{
+  width: 40%;
+  font-size: 10px;
+  border-right: 3px solid lightgray;
+  border-bottom: 3px dotted lightgray;
+  padding: 0px;  
+}
+
+.tdDetectionType-techniquesummary
+{
+  width: 40%;
+  font-size: 10px;
+  border-right: 3px solid lightgray;
+  padding: 0px; 
+}
+
+.tdDetectionNotesDotted-techniquesummary
+{
+  width: 60%;
+  font-size: 10px;
+  border-bottom: 3px dotted lightgray;
+  padding: 0px;  
+}
+
+.tdDetectionNotes-techniquesummary
+{
+  width: 60%;
+  font-size: 10px;
+  padding: 0px; 
+}
+
+.td2Screenshots-techniquesummary
+{
+  width: 32%;
+  font-size: 10px; 
+}
+
+
+.aFootnote
+{
+  color: #666666;
+}
+
+.aFootnote:hover
+{
+  color: #666666;
+  cursor: default;
+  text-decoration: none;
+}
+
+.tdInnerDetectionNotes a span 
+{
+  display: none;
+}
+
+.tdInnerDetectionNotes a:hover span 
+{
+  display: block;
+  position: absolute;
+
+  /*position: relative;
+  right: 0;*/
+
+  margin: 0px;
+  padding: 10px;
+  color: black;
+  font-weight: normal;
+  background: white;
+  text-align: left;
+  border: 1px solid #666;
+  z-index: 2;
+  max-width: 400px;
+
+  cursor: default;
+}
+
+.spanProcedureSummaryStep
+{
+  font-size: 12px;
+  font-weight: bold;
+  color: blue;
+}
+
+.spanProcedureSummaryStep:hover
+{
+  cursor: pointer;
+  text-decoration: underline;
+  color: purple;
+}
+
+.footnote_text
+{
+  font-size: 10px;
+}
+
+.divMethodologyBody
+{
+  width: 50%;
+  margin: 0 auto;
+}
+
+.p-methodology, .divPhases-methodology
+{
+  padding-left: 30px;
+  max-width: 75ch;
+}
+
+.divFAQBody
+{
+  width: 50%;
+  margin: 0 auto;
+}
+
+
+.dropdown {
+    float: left;
+    overflow: hidden;
+}
+
+
+.dropdown .dropbtn {
+    font-size: 16px;    
+    border: none;
+    outline: none;
+    padding: 14px 16px;
+    background-color: inherit;
+    font-family: inherit;
+    margin: 0;
+}
+
+.hr-methodology
+{
+  border: 0;
+  height: 1px;
+  background: #333;
+  background-image: linear-gradient(to right, #ccc, #333, #ccc);
+}
+
+.spanDetectionIconSeparator
+{
+  font-size: 30px;
+  /*font-weight: bold;*/
+  color: black;
+  text-decoration: none;
+}
+
+/*.aDetectionIconSeparator:hover
+{
+  font-size: 20px;
+  font-weight: bold;
+  color: black;
+  text-decoration: none;
+  cursor: default;
+}*/
+
+@-webkit-keyframes fadeIn {
+    from { opacity: 0; }
+      to { opacity: 1; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+      to { opacity: 1; }
+}
+
+

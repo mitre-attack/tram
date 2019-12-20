@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+#aboutInfo {
+    margin-left: 50px;
+    margin-right: 50px;
+    margin-top: 50px
+}
+</style>
+<div id="aboutInfo">
+
+
+<p>
+TRAM is web-based tool that automates the extraction of adversary behaviors for the purpose of mapping them to ATT&CK. Since TRAM is a locally run tool, all the reports fed to it will stay on the local user's machine, and not be shared with MITRE in any capacity.
+</p>
+
+<h3>Submitting a Report</h3>
+<p>
+On TRAM's homepage, enter a web page URL (sorry no PDFs yet) to a report to be processed. It takes a few minutes to analyze a report, so please do not leave the page while it processes.
+</p>
+
+<p>
+Note: If a “Needs Review” card pops up right away, this generally means the website did not like us trying to scrape it, or something on the site could not be parsed. We are looking into this issue and hope to have a fix soon.
+</p>
+
+<p>
+    When the report is ready, a new card will appear. Each card will have two buttons:
+    <ul style="list-style-type:none;">
+    <li><b>Source</b>: this links back to original URL where the report originated from</li>
+    <li><b>Analyze</b>: this button links to the TRAM analyzed report </li>
+    </ul>
+
+    Note: If a card pops up right away, this generally means the website did not like us trying to scrape it, or something on the site could not be parsed.
+</p>
+
+<h3>Analyzing a Report</h3>
+
+<p>
+    TRAM's prediction model will try its best to find ATT&CK techniques in the report, but since our current data set is very limited, our models are not 100% accurate, so the tool requires an analyst to review and refine the technique prediction.
+</p>
+<p>
+    <ul style="list-style-type:none;">
+    <li><b>Accepting</b> a technique means the correct technique is in the selected highlighted sentence. That sentence and technique will go to the <b>"True Positives"</b> table in the database.</li>
+    <li><b>Rejecting</b> a technique means the technique is not in the highlighted sentence. That sentence and technique goes to the <b>"False Positives"</b> table in the database.</li>
+    <li><b>Add a Missing Technique</b> allows users to manually add any techniques that were missed in highlighted or un-highlighted sentences. Click the grey button and start typing in the technique you want to map, and click it when it appears. When a missing technique is added, it will be put <b>"True Negatives"</b> table in the database.</li>
+    </ul>
+    The new data and corresponding tables can then be used to rebuild the models. As more data is fed to the tool, analyst reviewed, and the model rebuilt we expect these predictions to get more accurate.
+</p>
+
+<h3>Exporting a Report</h3>
+<p>
+    Once an analyst has reviewed the entire report, TRAM’s results can now be exported as a PDF by clicking the <b>“Export PDF”</b> button on the top center of the page. Exporting will create a PDF containing a raw text version of the report, and a table with the ATT&CK technique and its corresponding sentence. (We know everyone wants additional export options, don't worry, we are working on it!)
+</p>
+<br>
+
+<h3>Contact Us</h3>
+<p>
+    If you have any questions or comments about TRAM or what we’re doing in cyber threat intelligence overall, please feel free to please send us an <a href="mailto:attack@mitre.org">e-mail</a> or message on <a href="https://twitter.com/MITREattack">Twitter</a>.
+</p>
+
+
+
+
+</div>
+
+{% endblock %}

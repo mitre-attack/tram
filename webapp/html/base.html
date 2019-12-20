@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang='en'>
+    <head>
+        {% block head %}
+        <meta charset='utf-8'>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <link rel='shortcut icon' href='/theme/images/favicon-blue-m.ico' type='image/x-icon'>
+
+        <title>MITRE ATT&CK&trade; - TRAM</title>
+        <link rel='stylesheet' href='/theme/style/bootstrap.min.css'/>
+        <link rel='stylesheet' href='/theme/style/bootstrap-glyphicon.min.css'/>
+        <link rel='stylesheet' href='/theme/style/bootstrap-select.css'/>
+        <link href='/theme/style/style.css' rel='stylesheet' type='text/css'/>
+
+        <script src="/theme/scripts/popper.js"></script>
+        <script src="/theme/scripts/jquery-3.3.1.min.js"></script>
+        <script src="/theme/scripts/bootstrap.js"></script>
+        <script src="/theme/scripts/bootstrap-select.js"></script>
+        <script src="/theme/scripts/pdfmake.min.js"></script>
+        <script src="/theme/scripts/vfs_fonts.js"></script>
+        <script src="/theme/scripts/basics.js"></script>
+        <script src="/theme/scripts/kanban.js"></script>
+        {% endblock %}
+    </head>
+
+    <header class='pb-5'>
+        <nav class='navbar navbar-expand-lg navbar-dark fixed-top bg-info border-bottom'>
+            <a class='navbar-brand' href='/'><img src='/theme/images/tram.png' height='60px' alt=''></a>
+            <button class='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarCollapse'
+                    aria-controls='navbarCollapse' aria-expanded='false' aria-label='Toggle navigation'>
+                <span class='navbar-toggler-icon'></span>
+            </button>
+            <div class='collapse navbar-collapse' id='navbarCollapse'>
+                <ul class='nav nav-tabs ml-auto'>
+                    <li class="nav-item"><a href="/" class="nav-link"><b>Home</b></a></li>
+                    <li class="nav-item"><a href="/about" class="nav-link"><b>About</b></a></li>
+                    <li class="nav-item"><a href="https://attack.mitre.org" target="_blank" class="nav-link"><b>ATT&CK</b>&nbsp;<img
+                            src="/theme/images/external-site.svg" alt="External site" class="external-icon"/></a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+        <div id='content'>{% block content %} {% endblock %}</div>
+        <footer class="footer p-3">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-4 col-sm-4 col-md-3">
+                        <div class="footer-center-responsive my-auto">
+                            <a href="https://www.mitre.org" target="_blank" rel="noopener" aria-label="MITRE">
+                                <img src="/theme/images/mitrewhite.gif" style="vertical-align: center" width="144" height="66">
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-6 text-center">
+                        <p>
+                            Copyright © 2019, The MITRE Corporation. MITRE ATT&CK and ATT&CK are trademarks of The MITRE
+                            Corporation.
+                        </p>
+                        <div class="row">
+                            <div class="col text-right">
+                                <small>
+                                    <a href="https://www.mitre.org/privacy-policy" class="footer-link">Privacy Policy&nbsp;<img
+                                            src="/theme/images/external-site.svg" alt="External site" class="external-icon"></a>
+                                </small>
+                            </div>
+                            <div class="col text-left">
+                                <small>
+                                    <a href="https://www.mitre.org/terms-of-use" class="footer-link">Terms of Use&nbsp;<img
+                                            src="/theme/images/external-site.svg" alt="External site" class="external-icon"></a>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-2 footer-responsive-break"></div>
+                    <div class="col">
+                        <div class="footer-float-right-responsive">
+                            <div class="mb-1">
+                                <a href="https://twitter.com/MITREattack" class="btn btn-primary w-100">
+                                    <!-- <i class="fa fa-twitter"></i> -->
+                                    <img src="/theme/images/twitter.png" class="mr-1" style="vertical-align: top" width="20"
+                                         height="20">
+                                    <b>@MITREattack</b>
+                                </a>
+                            </div>
+                            <div class="">
+                                <a href="/contact" class="btn btn-primary w-100">
+                                    Contact
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+<script src="/theme/scripts/jquery-3.3.1.min.js"></script>
+</html>

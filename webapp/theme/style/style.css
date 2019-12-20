@@ -1,0 +1,293 @@
+
+/*Overall styling*/
+html
+{
+    font-size: 100%;
+}
+
+body {
+  height: 100%;
+  color:#000000;
+  font-family: 'Roboto-Regular', sans-serif;
+}
+h1{
+  font-family: 'Roboto-Regular', sans-serif;
+}
+h2{
+  font-family: 'Roboto-Light', sans-serif;
+}
+
+footer .footer-link 
+{
+  color: #ffffff;
+}
+
+/*Override some bootstrap defaults*/
+.jumbotron{
+  padding: 0;
+}
+.faq{
+  line-height: 2rem;
+}
+
+
+.right {
+  transform: rotate(-45deg);
+  -webkit-transform: rotate(-45deg);
+}
+
+#hide_show {
+  transform: rotate(-0deg);
+  -webkit-transform: rotate(-0deg);
+} 
+
+/*Navigation and links*/
+.navbar-orange{
+  background-color: #c63f1d;
+}
+.navbar-orange > a > .nav-link{
+  color: white;
+}
+.nav-tabs{
+  border-bottom: none;
+}
+.nav-tabs .nav-link {
+  color: white;
+  font-family: 'Roboto-Light', sans-serif;
+}
+.nav-tabs .nav-link:focus, .nav-tabs .nav-link.active {
+    color: white;
+    border: none;
+    border-top-left-radius: 0rem;
+    border-top-right-radius: 0rem;
+    text-decoration: underline;
+}
+
+ .nav-tabs .nav-link:hover:not(.active){
+  text-decoration: underline;
+  border: 1px solid transparent;
+  border-top-left-radius: .25rem;
+  border-top-right-radius: .25rem;
+ }
+.nav-link{
+  font-size: 1rem;
+  padding: .3rem 1rem;
+  color: #596877;
+}
+.nav-link.expand-title{
+  font-size: 1.1rem;
+  color: black;
+}
+/* .nav-link.side {
+    padding: .3rem .3rem;
+    word-break: break-word;
+} */
+.nav-link.side:hover {
+  background-color: #c63f1d;
+  color: white;
+}
+.nav-link.side.active{
+  background-color:#f3f3f3;
+  color: #c63f1e;
+  border-right: 3px solid #c63f1e;
+}
+
+
+
+.breadcrumb{
+  background-color: white;
+}
+.heading{
+  font-size: 1.6rem;
+  color: #596877;
+  letter-spacing: 3px;
+}
+.heading-dropdown{
+  font-size: 1.2rem;
+  color: #062f4f;
+  letter-spacing: 3px;
+}
+.expand-all{
+  background-image: url('../images/search.png');
+  height: 30px;
+  width: 30px;
+  background-size: contain;
+}
+a{
+  color: #4F7CAC;
+}
+
+.card-data {
+  margin-bottom: 0.5rem;
+  color: #555555;
+}
+
+.card-title {
+  font-size: 1.1rem;
+  color: #000000;
+}
+
+.external-icon {
+  width: 15px;
+  margin-top: -5px;
+}
+
+.expand-icon {
+  font-size: 5%;
+  color: #343434;
+  margin-top: 7px;
+}
+
+/*colors*/
+.gray-text{
+  color: #99958F;
+}
+.bg-orange{
+  /*ATT&CK Evals Green*/
+  background-color: #317b22;
+  background-color: #c63f1e;
+  
+  color: white;
+}
+.bg-light{
+  background-color: #ffffff !important;
+}
+.bg-navy{
+  background-color: #062f4f;
+}
+
+.bg-accord-light{
+  background-color: #f8f9fa;
+}
+
+.bg-accord-dark{
+  background-color: #e9ecef;
+}
+
+/*buttons*/
+.btn-default{
+  border-color: gray;
+}
+.btn-navy {
+  color: #fff;
+  background-color: #062f4f;
+  border-color: 1px solid #062f4f;
+}
+.btn-navy:hover{
+  color: #fff;
+  background-color: #1C415F;
+  background-image: none;
+  border-color: 1px solid #062f4f;
+
+}
+
+/*tables*/
+table  {
+  empty-cells: hide;
+}
+.table-light{
+  background-color: #f3f3f3;
+}
+
+/*Footer styling*/
+.footer {
+    background-color: #062f4f;
+    color: white;
+    font-family: 'Roboto-Thin', sans-serif;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    > .container-fluid {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+    }
+
+    .footer-link {
+        color: on-color(secondary);
+
+        &:hover {
+            //add some link color to this so that it resembles a link, but is still visible if normal link color is not visible on footer color
+            color: mix(on-color(secondary), color(link));
+        }
+    }
+}
+
+@media only screen and (max-width: 1450px) {
+  .heading-dropdown{
+    font-size: 1rem;
+    color: #062f4f;
+    letter-spacing: 1px;
+  }
+  .heading{
+    font-size: 1.2rem;
+    color: #596877;
+    letter-spacing: 3px;
+  }
+}
+
+/*base.html*/
+#content{
+margin-top: 20px;
+margin-bottom: 20px;
+width: 100%;
+min-height: calc(92vh - 149px) !important;
+}
+
+.spanBreadcrumbs-results{
+font-size: 90%;
+}
+
+/*review_doc.html*/
+
+#content{
+margin-top: 20px;
+margin-bottom: 20px;
+width: 100%;
+min-height: calc(0vh - 149px) !important;
+}
+
+.missingTechniquesView
+{
+/*background-color: #00334f;*/
+background-color: #FFFFFF;
+border: 2px solid gray;
+
+position: sticky;
+right: 20px;
+/*top: 100px;*/
+top: 90px;
+
+max-width: 400px;
+height: 90vh;
+
+overflow: auto;
+padding: 10px;
+}
+
+.report_view {
+margin-right:100px;
+margin-left:100px;
+}
+
+#reportSentencesDiv {
+    background-color: green;
+}
+
+.sticky {
+  height: 100%;
+  position: sticky;
+  top: 10px;
+}
+
+.card.draggable {
+    margin-bottom: 2rem;
+    cursor: grab;
+}
+
+.droppable {
+    background-color: var(--success);
+    min-height: 150px;
+    margin-bottom: 5rem;
+}
+

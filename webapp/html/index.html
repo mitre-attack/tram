@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    .footer { position: fixed; }
+</style>
+
+    <div class="container-fluid">
+      <div class="row">
+        <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+          <div class="sidebar-sticky">
+            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1">
+              <span>Enter New Report</span>
+            </h6>
+                <div class="tab-content">
+                    <div id="home" class="tab-pane fade in active show">
+                        <div class="card-body divOperationalFlow-tacticsummary">
+                          <form>
+                                <div class="form-group">
+                                    <label for="url">Insert URL</label>
+                                    <input type="url" class="form-control" id="url" placeholder="Enter URL">
+                                </div>
+                                <div class="form-group">
+                                    <label for="title">Insert Title</label>
+                                    <input type="text" class="form-control" id="title" placeholder="Enter the article title">
+                                </div>
+                                <button type="submit" onclick='submit_report()' class="btn btn-primary">Submit</button>
+                            </form>
+                      </div>
+                    </div>
+                </div>
+          </div>
+        </nav>
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+            <div class="row flex-row flex-sm-nowrap py-3">
+                <div class="col-sm-6 col-md-4 col-xl-3">
+                    <div class="card bg-light">
+                        <div id="needs_review" class="card-body">
+                            <h6 class="card-title text-uppercase text-truncate py-2">Needs Review</h6>
+                            <div class="items border border-light">
+                                {% for report in needs_review %}
+                                <div class="card draggable shadow-sm" id="needs_review-{{report.uid}}" draggable="true" ondragstart="drag(event)">
+                                <div class="card-body">
+                                    <a onclick="deleteReport({{report.uid}})"
+                                       class="glyphicon glyphicon-trash btn-sm btn-outline-danger float-right"></a>
+                                    <p>
+                                    <p class="card-text">{{report.title}}</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="btn-group">
+                                                <a href="{{report.url}}" class="btn btn-sm btn-outline-secondary">Source</a>
+                                                <a href="{{report.link}}" class="btn btn-sm btn-outline-secondary">Analyze</a>
+                                            </div>
+                                        </div>
+                                </div>
+                                </div>
+                                {% endfor %}
+                                <div id="testing" class="dropzone rounded" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="clearDrop(event)"> &nbsp </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-4 col-xl-3">
+                    <div class="card bg-light">
+                        <div id="review" class="card-body">
+                            <h6 class="card-title text-uppercase text-truncate py-2">Analyst Reviewing</h6>
+                            <div class="items border border-light">
+                                {% for report in in_review %}
+                                <div class="card draggable shadow-sm" id="review-{{report.uid}}" draggable="true" ondragstart="drag(event)">
+                                <div class="card-body">
+                                    <a onclick="deleteReport({{report.uid}})"
+                                       class="glyphicon glyphicon-trash btn-sm btn-outline-danger float-right"></a>
+                                    <p>
+                                    <p class="card-text">{{report.title}}</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="btn-group">
+                                                <a href="{{report.url}}" class="btn btn-sm btn-outline-secondary">View Source</a>
+                                                <a href="{{report.link}}" class="btn btn-sm btn-outline-secondary">Analyze</a>
+                                            </div>
+                                        </div>
+                                </div>
+                                </div>
+                                {% endfor %}
+                                <div id="connor" class="dropzone rounded" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="clearDrop(event)"> &nbsp </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-4 col-xl-3">
+                    <div id="hello" class="card">
+                        <div id="hellothere" class="card-body">
+                            <h6 class="card-title text-uppercase text-truncate py-2">Complete</h6>
+                            <div id="completed" class="items border border-light">
+                                {% for report in completed %}
+                                <div class="card draggable shadow-sm" id="completed-{{report.uid}}" draggable="true" ondragstart="drag(event)">
+                                <div class="card-body">
+                                    <a onclick="deleteReport({{report.uid}})"
+                                       class="glyphicon glyphicon-trash btn-sm btn-outline-danger float-right"></a>
+                                    <p>
+                                    <p class="card-text">{{report.title}}</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="btn-group">
+                                                <a href="{{report.url}}" class="btn btn-sm btn-outline-secondary">View Source</a>
+                                                <a href="{{report.link}}" class="btn btn-sm btn-outline-secondary">Analyze</a>
+                                            </div>
+                                        </div>
+                                </div>
+                                </div>
+                                {% endfor %}
+                                <div class="dropzone rounded" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="clearDrop(event)"> &nbsp </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+      </div>
+    </div>
+
+{% endblock %}
