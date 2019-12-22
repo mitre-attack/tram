@@ -20,7 +20,7 @@ from database.dao import Dao
 
 @asyncio.coroutine
 async def background_tasks(build):
-    if build:
+    if not build:
         await data_svc.reload_database()
         await data_svc.insert_attack_data()
 
@@ -65,11 +65,7 @@ if __name__ == '__main__':
     logging.getLogger().setLevel('DEBUG')
 
     dao = Dao(os.path.join('database', 'tram.db'))
-
-    if not os.path.isfile(os.path.join('database', 'tram.db')) or args.force_build:
-        build = True
-    else:
-        build = False
+    build = bool(os.path.isfile(os.path.join('database', 'tram.db')) or args.force_build)
 
     web_svc = WebService()
     reg_svc = RegService(dao=dao)
