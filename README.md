@@ -18,6 +18,7 @@ If you've never started the project before, you'll need to download the `punkt` 
 ```python
 import nltk
 nltk.download('punkt')
+nltk.download('stopwords')
 ```
 
 Change server defaults:
