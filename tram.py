@@ -25,6 +25,7 @@ async def background_tasks(build):
         await data_svc.insert_attack_data()
 
 
+
 @asyncio.coroutine
 async def init(address, port):
     app = web.Application()
@@ -46,9 +47,10 @@ async def init(address, port):
 def main(host, port, build=False):
     loop = asyncio.get_event_loop()
     loop.create_task(background_tasks(build))
+    loop.create_task(ml_svc.check_nltk_packs())
     loop.run_until_complete(init(host, port))
     try:
-        logging.debug('server starting: %s:%s' % (host, port))
+        logging.info('server starting: %s:%s' % (host, port))
         loop.run_forever()
     except KeyboardInterrupt:
         pass

@@ -3,6 +3,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 import os, pickle, random
+import nltk
+import logging
 
 
 class MLService:
@@ -127,4 +129,19 @@ class MLService:
             analyzed_html.append(sentence)
             index += 1
         return analyzed_html
+
+    async def check_nltk_packs(self):
+        try:
+            nltk.data.find('tokenizers/punkt')
+            logging.info('[*] Found punkt')
+        except LookupError:
+            logging.warning('Could not find the punkt pack, downloading now')
+            nltk.download('punkt')
+        try:
+            nltk.data.find('corpora/stopwords')
+            logging.info('[*] Found stopwords')
+        except LookupError:
+            logging.warning('Could not find the stopwords pack, downloading now')
+            nltk.download('stopwords')
+
 
