@@ -105,9 +105,6 @@ class RestService:
                                           'example_uses': tp, 'false_positives': fp}
 
         html_data = await self.web_svc.get_url(criteria['url'])
-        # print(html_data)
-        # images = await self.web_svc.find_all_images(criteria['url'])
-        # print(images)
         original_html = await self.web_svc.map_all_html(criteria['url'])
 
         article = dict(title=criteria['title'], html_text=html_data)
@@ -137,7 +134,6 @@ class RestService:
 
         for element in original_html:
             html_element = dict(report_uid=report_id, text=element['text'], tag=element['tag'], found_status="false")
-            # print(html_element)
             await self.dao.insert('original_html', html_element)
 
     async def missing_technique(self, criteria=None):
