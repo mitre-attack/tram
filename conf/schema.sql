@@ -9,4 +9,3 @@ CREATE TABLE if not exists report_sentences (uid integer primary key AUTOINCREME
 CREATE TABLE if not exists report_sentence_hits (uid integer, attack_uid text, attack_technique_name text, report_uid integer);
 CREATE TABLE if not exists true_negatives (sentence text);
 CREATE TABLE if not exists original_html (uid integer, report_uid integer, text text, tag text, found_status text);
-CREATE TABLE if not exists images (uid integer primary key AUTOINCREMENT, report_uid integer, source text);
