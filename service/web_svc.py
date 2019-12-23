@@ -85,26 +85,26 @@ class WebService:
 
             return data
 
-    def collect_all_images(self, image_set):
+    async def collect_all_images(self, image_set):
         images = []
         for image in image_set:
             images.append(image)
         return images
 
-    def extract_text_as_list(self, plaintext_doc):
+    async def extract_text_as_list(self, plaintext_doc):
         plaintext = []
         for pt_line in plaintext_doc.split('\n'):
             if pt_line != '':
                 plaintext.append(pt_line)
         return plaintext
 
-    def extract_html_as_list(self, html_doc):
+    async def extract_html_as_list(self, html_doc):
         htmltext = []
         for html_line in html_doc.split('\n'):
             htmltext.append(html_line)
         return htmltext
 
-    def match_and_construct_img(self, images, source):
+    async def match_and_construct_img(self, images, source):
         for i in range(0, len(images)):
             if source in images[i]:
                 source = images[i]
@@ -117,7 +117,7 @@ class WebService:
         return img_dict
 
 
-    def construct_text_dict(self, plaintext):
+    async def construct_text_dict(self, plaintext):
         res_dict = dict()
         res_dict['text'] = plaintext
         res_dict['tag'] = 'p'
@@ -132,9 +132,9 @@ class WebService:
         a.parse()
         results, plaintext, htmltext, images, seen_images = [], [], [], [], []
 
-        images = self.collect_all_images(a.images)
-        plaintext = self.extract_text_as_list(a.text)
-        htmltext = self.extract_html_as_list(a.article_html)
+        images = await self.collect_all_images(a.images)
+        plaintext = await self.extract_text_as_list(a.text)
+        htmltext = await self.extract_html_as_list(a.article_html)
 
         # Loop through pt one by one, matching its line with a forward-advancing pointer on the html
         counter = 0
@@ -149,14 +149,14 @@ class WebService:
                     # Found an image, put it in data but don't advance incase there's text.
                     soup = BeautifulSoup(htmltext[forward_advancer], 'html.parser')
                     source = soup.img['src']
-                    img_dict = self.match_and_construct_img(images, source)
+                    img_dict = await self.match_and_construct_img(images, source)
                     
                     results.append(img_dict)
                     seen_images.append(source)
                     image_found = True
                 if first_word in htmltext[forward_advancer]:
                     # Found the matching word, put the text into the data.
-                    res_dict = self.construct_text_dict(pt)
+                    res_dict = await self.construct_text_dict(pt)
                     results.append(res_dict)
                     counter = forward_advancer + 1
                     text_match_found = True
@@ -167,7 +167,7 @@ class WebService:
                 results = results[:-1]
         return results
 
-    def build_final_image_dict(self, element):
+    async def build_final_image_dict(self, element):
         final_element = dict()
         final_element['uid'] = element['uid']
         final_element['text'] = element['text']
@@ -177,7 +177,7 @@ class WebService:
         final_element['confirmed'] = 'false'
         return final_element
 
-    def build_final_html_text(self, sentence, single_sentence): 
+    async def build_final_html_text(self, sentence, single_sentence): 
         final_element = dict()
         final_element['uid'] = sentence['uid']
         final_element['text'] = single_sentence
@@ -191,7 +191,7 @@ class WebService:
         final_html = []
         for element in original_html:
             if element['tag'] == 'img':
-                final_element = build_final_image_dict(element)
+                final_element = await self.build_final_image_dict(element)
                 final_html.append(final_element)
                 continue
 
@@ -206,7 +206,7 @@ class WebService:
                 for sentence in sentences:
                     if hint in sentence['text']:
                         ss_found = True
-                        final_element = build_final_html_text(sentence, single_sentence)
+                        final_element = await self.build_final_html_text(sentence, single_sentence)
                         final_html.append(final_element)
                         break
         return final_html
