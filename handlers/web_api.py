@@ -50,7 +50,10 @@ class WebAPI:
         report_needed = await self.dao.get('reports', dict(title=request.match_info.get('file')))
         sentences = await self.data_svc.build_sentences(report_needed[0]['uid'])
         attack_uids = await self.dao.get('attack_uids')
-        return dict(file=request.match_info.get('file'), sentences=sentences, attack_uids=attack_uids)
+        images = await self.dao.get('images', dict(report_uid=report_needed[0]['uid']))
+        original_html = await self.dao.get('original_html', dict(report_uid=report_needed[0]['uid']))
+        final_html = await self.web_svc.build_final_html(original_html, sentences)
+        return dict(file=request.match_info.get('file'), sentences=sentences, attack_uids=attack_uids, images=images, original_html=original_html, final_html=final_html)
 
     async def pdf_export(self, request):
         report_needed = await self.dao.get('reports', dict(title=request.match_info.get('file')))
@@ -85,7 +88,7 @@ class WebAPI:
                     for match in matching_attacks:
                         table["body"].append([match["tid"], match["name"], sentence['text']])
 
-        # Append table to the end     
+        # Append table to the end
         dd['content'].append({"table": table})
         return web.json_response(dd)
 
