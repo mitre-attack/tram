@@ -7,7 +7,6 @@ import aiohttp_jinja2
 import jinja2
 from aiohttp import web
 
-
 from handlers.web_api import WebAPI
 from service.data_svc import DataService
 from service.web_svc import WebService
@@ -19,11 +18,10 @@ from database.dao import Dao
 
 
 @asyncio.coroutine
-async def background_tasks(build):
-    if not build:
+async def background_tasks(build_status):
+    if not build_status:
         await data_svc.reload_database()
         await data_svc.insert_attack_data()
-
 
 
 @asyncio.coroutine

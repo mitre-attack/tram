@@ -73,7 +73,8 @@ class RestService:
         return dict(status='inserted', last=last)
 
     async def insert_report(self, criteria=None):
-        criteria['id'] = await self.dao.insert('reports', dict(title=criteria['title'], url=criteria['url'], current_status="needs_review"))
+        criteria['id'] = await self.dao.insert('reports', dict(title=criteria['title'], url=criteria['url'],
+                                                               current_status="needs_review"))
         self.loop.create_task(self.start_analysis(criteria))
 
     async def start_analysis(self, criteria=None):
@@ -104,6 +105,8 @@ class RestService:
                                           'example_uses': tp, 'false_positives': fp}
 
         html_data = await self.web_svc.get_url(criteria['url'])
+        original_html = await self.web_svc.map_all_html(criteria['url'])
+
         article = dict(title=criteria['title'], html_text=html_data)
         report_id = criteria['id']
         list_of_legacy, list_of_techs = await self.data_svc.ml_reg_split(json_tech)
@@ -128,6 +131,10 @@ class RestService:
             else:
                 data = dict(report_uid=report_id, text=sentence['text'], html=sentence['html'], found_status="false")
                 await self.dao.insert('report_sentences', data)
+
+        for element in original_html:
+            html_element = dict(report_uid=report_id, text=element['text'], tag=element['tag'], found_status="false")
+            await self.dao.insert('original_html', html_element)
 
     async def missing_technique(self, criteria=None):
         attack_uid = await self.dao.get('attack_uids', dict(tid=criteria['tid']))

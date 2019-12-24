@@ -8,6 +8,14 @@
         padding-top: 10px;
     }
 
+    .normalImage {
+        display: block;
+        max-height: 700px;
+        margin-left: auto;
+        margin-right: auto;
+        width: 75%;
+    }
+
 	a:hover {
   	background-color: #ffffbd;
 	}
@@ -25,12 +33,14 @@
 
 <div class="row">
     <div class="col reportSentencesDiv">
-        {% for sentence in sentences %}
-        {% if sentence.found_status == 'true' %}
-                <a class="bg-warning" id="sentence{{sentence.uid}}" onclick="sentenceContext({{sentence.uid}})">{{ sentence.text }}</a>
-        {% else %}
-        <a id="sentence{{sentence.uid}}" onclick="sentenceContext({{sentence.uid}})">{{ sentence.text }}</a>
-        {% endif %}
+        {% for elmt in final_html %}
+            {% if elmt.tag == 'img' %}
+                <img src="{{elmt.text}}" class="normalImage">
+            {% elif elmt.found_status == 'true' %}
+                <a class="bg-warning" id="elmt{{elmt.uid}}" onclick="sentenceContext({{elmt.uid}})">{{elmt.text}}</a>
+            {% else %}
+                <a id="elmt{{elmt.uid}}" onclick="sentenceContext({{elmt.uid}})">{{elmt.text}}</a>
+            {% endif %}
         <br><br>
         {% endfor %}
     </div>
