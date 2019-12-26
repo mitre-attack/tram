@@ -60,9 +60,9 @@ class WebService:
             # element is a full html element, can contain multiple lines
             # separate by each sentence
             html_sentences = element['text'].split('. ')
+            await self._restore_periods_on_sentences(html_sentences)
             for single_sentence in html_sentences:
                 ss_found = False
-                # print(token)
                 words = single_sentence.split(' ')
                 hint = words[0] + ' ' + words[1] + ' ' + words[2] if len(words) > 2 else words[0]
                 for sentence in sentences:
@@ -197,3 +197,11 @@ class WebService:
         res_dict['ml_techniques_found'] = []
         res_dict['res_techniques_found'] = []
         return res_dict
+
+    @staticmethod
+    async def _restore_periods_on_sentences(sentence_list):
+        if len(sentence_list) == 1:
+            return
+        for index in range(len(sentence_list)-1):
+            sentence_list[index] += '.'
+
