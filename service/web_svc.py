@@ -60,7 +60,7 @@ class WebService:
             # element is a full html element, can contain multiple lines
             # separate by each sentence
             html_sentences = element['text'].split('. ')
-            await self._restore_periods_on_sentences(html_sentences)
+            html_sentences = await self._restore_periods_on_sentences(html_sentences)
             for single_sentence in html_sentences:
                 ss_found = False
                 words = single_sentence.split(' ')
@@ -200,8 +200,6 @@ class WebService:
 
     @staticmethod
     async def _restore_periods_on_sentences(sentence_list):
-        if len(sentence_list) == 1:
-            return
-        for index in range(len(sentence_list)-1):
-            sentence_list[index] += '.'
+        sen_len = len(sentence_list)
+        return sentence_list if sen_len == 1 else [sentence_list[i] + "." for i in range(sen_len-1)]
 
