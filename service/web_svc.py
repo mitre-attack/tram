@@ -15,7 +15,6 @@ class WebService:
         a.download()
         a.parse()
         results, plaintext, htmltext, images, seen_images = [], [], [], [], []
-
         images = await self._collect_all_images(a.images)
         plaintext = await self._extract_text_as_list(a.text)
         htmltext = await self._extract_html_as_list(a.article_html)
