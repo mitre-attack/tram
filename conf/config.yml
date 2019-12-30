@@ -1,0 +1,8 @@
+---
+
+host: 0.0.0.0
+port: 9999
+taxii-local: taxii-server
+build: True
+json_file: enterprise-attack.json
+
