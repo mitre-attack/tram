@@ -1,11 +1,84 @@
-CREATE TABLE if not exists attack_uids (uid integer, description text, tid text, name text);
-CREATE TABLE if not exists true_positives (uid integer, sentence_id integer, true_positive text);
-CREATE TABLE if not exists false_positives (uid integer, sentence_id integer, false_positive text);
-CREATE TABLE if not exists false_negatives (uid integer, sentence_id integer, false_negative text);
-CREATE TABLE if not exists regex_patterns (uid integer, attack_uid text, regex_pattern text);
-CREATE TABLE if not exists similar_words (uid integer, attack_uid text, similar_word text);
-CREATE TABLE if not exists reports (uid integer primary key AUTOINCREMENT, title text, url text, attack_key text, current_status text);
-CREATE TABLE if not exists report_sentences (uid integer primary key AUTOINCREMENT, report_uid integer, text text, html text, found_status text);
-CREATE TABLE if not exists report_sentence_hits (uid integer, attack_uid text, attack_technique_name text, report_uid integer);
-CREATE TABLE if not exists true_negatives (sentence text);
-CREATE TABLE if not exists original_html (uid integer, report_uid integer, text text, tag text, found_status text);
+PRAGMA foreign_keys = ON;
+
+CREATE TABLE if not exists attack_uids (
+    uid VARCHAR(60) PRIMARY KEY,
+    description TEXT,
+    tid TEXT,
+    name TEXT
+    );
+
+CREATE TABLE if not exists true_positives (
+    uid VARCHAR(60),
+    sentence_id integer,
+    true_positive TEXT,
+    FOREIGN KEY(uid) REFERENCES attack_uids(uid)
+    );
+
+CREATE TABLE if not exists false_positives (
+    uid VARCHAR(60),
+    sentence_id integer,
+    false_positive TEXT,
+    FOREIGN KEY(uid) REFERENCES attack_uids(uid)
+    );
+
+CREATE TABLE if not exists false_negatives (
+    uid VARCHAR(60),
+    sentence_id INTEGER,
+    false_negative TEXT,
+    FOREIGN KEY(uid) REFERENCES attack_uids(uid)
+    );
+
+CREATE TABLE if not exists regex_patterns (
+    uid integer PRIMARY KEY AUTOINCREMENT,
+    attack_uid VARCHAR(60),
+    regex_pattern TEXT,
+    FOREIGN KEY(attack_uid) REFERENCES attack_uids(uid)
+    );
+
+CREATE TABLE if not exists similar_words (
+    uid VARCHAR(60),
+    attack_uid TEXT,
+    similar_word TEXT,
+    FOREIGN KEY(attack_uid) REFERENCES attack_uids(uid)
+    );
+
+CREATE TABLE if not exists reports (
+    uid integer PRIMARY KEY AUTOINCREMENT,
+    title TEXT,
+    url TEXT,
+    attack_key TEXT,
+    current_status TEXT
+    );
+
+CREATE TABLE if not exists report_sentences (
+    uid integer PRIMARY KEY AUTOINCREMENT,
+    report_uid INTEGER,
+    text TEXT,
+    html TEXT,
+    found_status TEXT
+    );
+
+CREATE TABLE if not exists report_sentence_hits (
+    uid INTEGER,
+    attack_uid TEXT,
+    attack_technique_name TEXT,
+    report_uid INTEGER
+    );
+
+CREATE TABLE if not exists true_negatives (
+    uid VARCHAR(60),
+    sentence TEXT,
+    FOREIGN KEY(uid) REFERENCES attack_uids(uid)
+    );
+
+CREATE TABLE if not exists original_html (
+    uid INTEGER,
+    report_uid INTEGER,
+    text TEXT,
+    tag TEXT,
+    found_status TEXT
+    );
+
+
+
+--INSERT INTO regex_patterns (attack_uid, regex_pattern) values ("attack-pattern--01df3350-ce05-4bdf-bdf8-0a919a66d4a8", "sometext.*moretext")

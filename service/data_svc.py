@@ -1,9 +1,16 @@
 import re
+import json
+import logging
 from taxii2client import Collection
 from stix2 import TAXIICollectionSource, Filter
 
 
 def defang_text(text):
+    """
+    Function to normalize quoted data to be sql compliant
+    :param text: Text to be defang'd
+    :return: Defang'd text
+    """
     text = text.replace("'", "''")
     text = text.replace('"', '""')
     return text
@@ -16,11 +23,20 @@ class DataService:
         self.web_svc = web_svc
 
     async def reload_database(self, schema='conf/schema.sql'):
+        """
+        Function to reinitialize the database with the packaged schema
+        :param schema: SQL schema file to build database from
+        :return: nil
+        """
         with open(schema) as schema:
             await self.dao.build((schema.read()))
 
-    async def insert_attack_data(self):
-        print('downloading ATT&CK data from STIX/TAXI...')
+    async def insert_attack_stix_data(self):
+        """
+        Function to pull stix/taxii information and insert in to the local db
+        :return: status code
+        """
+        logging.info('Downloading ATT&CK data from STIX/TAXII...')
         attack = {}
         collection = Collection("https://cti-taxii.mitre.org/stix/collections/95ecc380-afe9-11e4-9b6c-751b66dd541e/")
         tc_source = TAXIICollectionSource(collection)
@@ -69,7 +85,7 @@ class DataService:
                                    "example_uses": [], "similar_words": [i["name"]]}
 
         attack_data = references
-        print("Finished...now creating the database.")
+        logging.info("Finished...now creating the database.")
 
         cur_uids = await self.dao.get('attack_uids') if await self.dao.get('attack_uids') else []
         cur_items = [i['uid'] for i in cur_uids]
@@ -95,7 +111,62 @@ class DataService:
                 if 'example_uses' in v:
                     [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x))) for x in
                      v['example_uses']]
-        print('[!] DB Item Count: {}'.format(len(await self.dao.get('attack_uids'))))
+        logging.info('[!] DB Item Count: {}'.format(len(await self.dao.get('attack_uids'))))
+
+    async def insert_attack_json_data(self, buildfile):
+        """
+        Function to read in the enterprise attack json file and insert data into the database
+        :param buildfile: Enterprise attack json file to build from
+        :return: nil
+        """
+        cur_items = [x['uid'] for x in await self.dao.get('attack_uids')]
+        logging.debug('[#] {} Existing items in the DB'.format(len(cur_items)))
+        with open(buildfile, 'r') as infile:
+            attack_dict = json.load(infile)
+            loaded_items = {}
+            # Extract all TIDs
+            for item in attack_dict['objects']:
+                if 'external_references' in item:
+                    # Filter down
+                    if any(x for x in item['external_references'] if x['source_name'] == 'mitre-attack'):
+                        items = [x['external_id'] for x in item['external_references'] if
+                                 x['source_name'] == 'mitre-attack']
+                        if len(items) == 1:
+                            tid = items[0]
+                            # Add in
+                            if tid.startswith('T') and not tid.startswith('TA'):
+                                if item['type'] == "attack-pattern":
+                                    loaded_items[item['id']] = {'id': tid, 'name': item['name'],
+                                                                'examples': [],
+                                                                'similar_words': [],
+                                                                'description': item['description'],
+                                                                'example_uses': []}
+                        else:
+                            logging.critical('[!] Error: multiple MITRE sources: {} {}'.format(item['id'], items))
+            # Extract uses for all TIDs
+            for item in attack_dict['objects']:
+                if item['type'] == 'relationship':
+                    if item["relationship_type"] == 'uses':
+                        if 'description' in item:
+                            normalized_example = item['description'].replace('<code>', '').replace('</code>',
+                                       '').replace('\n', '').encode('ascii', 'ignore').decode('ascii')
+                            # Remove att&ck reference (name)[link to site]
+                            normalized_example = re.sub('\[.*?\]\(.*?\)', '', normalized_example)
+                            if item['target_ref'].startswith('attack-pattern'):
+                                if item['target_ref'] in loaded_items:
+                                    loaded_items[item['target_ref']]['example_uses'].append(normalized_example)
+                                else:
+                                    logging.critical('[!] Found target_ref not in loaded data: {}'.format(item['target_ref']))
+        logging.debug("[#] {} Techniques found in input file".format(len(loaded_items)))
+        # Deduplicate input data from existing items in the DB
+        to_add = {x: y for x, y in loaded_items.items() if x not in cur_items}
+        logging.debug('[#] {} Techniques found that are not in the existing database'.format(len(to_add)))
+        for k, v in to_add.items():
+            await self.dao.insert('attack_uids', dict(uid=k, description=defang_text(v['description']), tid=v['id'],
+                                                      name=v['name']))
+            if 'example_uses' in v:
+                [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x))) for x in
+                 v['example_uses']]
 
     async def status_grouper(self, status):
         reports = await self.dao.get('reports', dict(current_status=status))
