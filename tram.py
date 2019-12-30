@@ -1,6 +1,5 @@
 import os
 import sys
-import argparse
 import asyncio
 import logging
 import yaml
@@ -20,17 +19,17 @@ from database.dao import Dao
 
 
 @asyncio.coroutine
-async def background_tasks(on_off='online', build=False, json_file=None):
+async def background_tasks(taxii_local='online', build=False, json_file=None):
     """
     Function to run background tasks at startup
-    :param on_off: Expects 'online' or 'offline' to specify the build type.
+    :param taxii_local: Expects 'online' or 'offline' to specify the build type.
     :param build: Defines whether or not a new database will be rebuilt
     :param json_file: Expects a path to the enterprise attack json if the 'json' build method is called.
     :return: nil
     """
     if build:
         await data_svc.reload_database()
-        if on_off == 'online':
+        if taxii_local == 'taxii-server':
             try:
                 await data_svc.insert_attack_stix_data()
             except Exception as exc:
@@ -39,7 +38,7 @@ async def background_tasks(on_off='online', build=False, json_file=None):
                                  '"-FF" FOR OFFLINE DATABASE BUILDING\n'
                                  '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'.format(exc))
                 sys.exit()
-        elif build == 'offline' and json_file:
+        elif taxii_local == 'local-json' and json_file:
             await data_svc.insert_attack_json_data(json_file)
 
 
@@ -69,7 +68,7 @@ async def init(host, port):
     await web.TCPSite(runner, host, port).start()
 
 
-def main(host, port, on_off=False, build=False, json_file=None):
+def main(host, port, taxii_local=False, build=False, json_file=None):
     """
     Main function to start app
     :param host: Address to reach webserver on
@@ -79,7 +78,7 @@ def main(host, port, on_off=False, build=False, json_file=None):
     :return: nil
     """
     loop = asyncio.get_event_loop()
-    loop.create_task(background_tasks(on_off=on_off, build=build, json_file=json_file))
+    loop.create_task(background_tasks(taxii_local=taxii_local, build=build, json_file=json_file))
     loop.create_task(ml_svc.check_nltk_packs())
     loop.run_until_complete(init(host, port))
     try:
@@ -98,12 +97,12 @@ if __name__ == '__main__':
         conf_build = config['build']
         host = config['host']
         port = config['port']
-        offline_online = config['offline_online']
+        taxii_local = config['taxii-local']
         json_file = os.path.join('models', config['json_file'])
         attack_dict = None
-        if conf_build == 'True':
+        if conf_build:
             build = True
-            if offline_online == 'offline' and bool(os.path.isfile(json_file)):
+            if taxii_local == 'local-json' and bool(os.path.isfile(json_file)):
                 logging.debug("Will build model from static file")
                 attack_dict = os.path.abspath(json_file)
 
@@ -115,5 +114,5 @@ if __name__ == '__main__':
     rest_svc = RestService(web_svc, reg_svc, data_svc, ml_svc, dao)
     services = dict(dao=dao, data_svc=data_svc, ml_svc=ml_svc, reg_svc=reg_svc, web_svc=web_svc, rest_svc=rest_svc)
     website_handler = WebAPI(services=services)
-    main(host, port, on_off=offline_online, build=False, json_file=attack_dict)
+    main(host, port, taxii_local=taxii_local, build=build, json_file=attack_dict)
 

@@ -2,7 +2,7 @@
 
 host: 0.0.0.0
 port: 9999
-offline_online: online
-build: False
-json_file: data.json
+taxii-local: taxii-server
+build: True
+json_file: enterprise-attack.json
 
