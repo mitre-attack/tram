@@ -27,7 +27,7 @@
 
 <div class="row justify-content-center pb-3">
     <div class="col-md-auto">
-        <button onclick="$.getJSON('/export/{{file}}', (x) => {pdfMake.createPdf(x).download();})" class="btn btn-md btn-outline-secondary">Export PDF</button>
+        <button onclick="$.getJSON('/export/{{file}}', (x) => {pdfMake.createPdf(x).download(x['info']['title']);})" class="btn btn-md btn-outline-secondary">Export PDF</button>
     </div>
 </div>
 
