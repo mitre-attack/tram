@@ -62,7 +62,7 @@ class WebAPI:
         attack_uids = await self.dao.get('attack_uids')
         original_html = await self.dao.get('original_html', dict(report_uid=report_needed[0]['uid']))
         final_html = await self.web_svc.build_final_html(original_html, sentences)
-        return dict(file=request.match_info.get('file'), sentences=sentences, attack_uids=attack_uids, original_html=original_html, final_html=final_html)
+        return dict(file=request.match_info.get('file'), title=report_needed[0]['title'], sentences=sentences, attack_uids=attack_uids, original_html=original_html, final_html=final_html)
 
     async def pdf_export(self, request):
         """
