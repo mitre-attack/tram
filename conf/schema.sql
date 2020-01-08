@@ -62,7 +62,8 @@ CREATE TABLE if not exists report_sentence_hits (
     uid INTEGER,
     attack_uid TEXT,
     attack_technique_name TEXT,
-    report_uid INTEGER
+    report_uid INTEGER,
+    attack_tid TEXT
     );
 
 CREATE TABLE if not exists true_negatives (
