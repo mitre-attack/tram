@@ -64,7 +64,7 @@ class RestService:
         sentence_dict = await self.dao.get('report_sentences', dict(uid=criteria['sentence_id']))
         sentence_to_insert = await self.web_svc.remove_html_markup_and_found(sentence_dict[0]['text'])
         await self.dao.insert('true_positives', dict(sentence_id=sentence_dict[0]['uid'], uid=criteria['attack_uid'],
-                                                        true_positive=sentence_to_insert, is_image=criteria['is_image']))
+                                                    true_positive=sentence_to_insert, is_image=criteria['is_image']))
         return dict(status='inserted')
 
     async def false_positive(self, criteria=None):

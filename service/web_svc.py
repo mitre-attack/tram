@@ -51,7 +51,6 @@ class WebService:
 
     async def build_final_html(self, original_html, sentences):
         final_html = []
-        
         for element in original_html:
             if element['tag'] == 'img':
                 final_element = await self._build_final_image_dict(element)
