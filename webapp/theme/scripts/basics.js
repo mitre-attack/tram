@@ -1,6 +1,8 @@
 var sentence_id = 0
+var image_clicked = false;
 
 function restRequest(type, data, callback) {
+  console.log(data)
     $.ajax({
        url: '/rest',
        type: type,
@@ -93,7 +95,24 @@ function savedAlert(){
     }
  }
 
+function imageContext(data, attack_uid) {
+  console.log("in image context", data)
+  image_clicked = true;
+  restRequest('POST', {'index':'image_context', 'uid':data, 'attack_uid':attack_uid}, updateImageContext);
+  restRequest('POST', {'index':'confirmed_images', 'sentence_id': data}, updateConfirmedContext);
+  sentence_id = data;
+}
+
+function updateImageContext(data) {
+  $("#tableSentenceInfo tr").remove()
+}
+
+// function updateConfirmedImgContext(data) {
+//   console.log(data)
+// }
+
 function sentenceContext(data, attack_uid){
+    image_clicked = false;
     restRequest('POST', {'index':'sentence_context', 'uid': data, 'attack_uid':attack_uid}, updateSentenceContext);
     restRequest('POST', {'index':'confirmed_sentences', 'sentence_id': data}, updateConfirmedContext);
     sentence_id = data;
@@ -103,7 +122,7 @@ function updateSentenceContext(data){
     $("#tableSentenceInfo tr").remove()
     $.each(data, function(index, op){
         td1 = "<td><a href=https://attack.mitre.org/techniques/" + op.attack_tid + " target=_blank>" + op.attack_technique_name + "</a></td>"
-        td2 = `<td><button class='btn btn-success' onclick='true_positive(true_positive, ${op.uid}, \"${op.attack_uid}\")'>Accept</button></td>`
+        td2 = `<td><button class='btn btn-success' onclick='true_positive(true_positive, ${op.uid}, \"${op.attack_uid}\")'>Accepto</button></td>`
         td3 = `<td><button class='btn btn-danger' onclick='false_positive(true_positive, ${op.uid}, \"${op.attack_uid}\")'>Reject</button></td>`
         tmp = `<tr id="sentence-tid${op.attack_uid.substr(op.attack_uid.length - 4)}">${td1}${td2}${td3}</tr>`
         $("#tableSentenceInfo").find('tbody').append(tmp);
@@ -144,7 +163,16 @@ $(window).resize(function() {
 
 function addMissingTechnique(){
     uid = $("#missingTechniqueSelect :selected").val();
-    restRequest('POST', {'index':'true_positive', 'sentence_id': sentence_id, 'attack_uid':uid}, savedAlert);
-    sentenceContext(sentence_id, uid)
+    console.log(uid)
+    console.log("button pressed")
+    if(image_clicked) {
+      console.log("Image clicked")
+      restRequest('POST', {'index':'image_positive', 'sentence_id': sentence_id, 'attack_uid':uid}, savedAlert);
+      imageContext(sentence_id, uid)
+    } else {
+      console.log("Sentence clicked!")
+      restRequest('POST', {'index':'true_positive', 'sentence_id': sentence_id, 'attack_uid':uid}, savedAlert);
+      sentenceContext(sentence_id, uid)
+    }
 }
 

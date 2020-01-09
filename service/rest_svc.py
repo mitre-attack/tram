@@ -57,6 +57,24 @@ class RestService:
             tmp.append(name[0])
         return tmp
 
+    async def image_context(self, criteria=None):
+        return []
+
+    async def confirmed_images(self, criteria=None):
+        tmp = []
+        techniques = await self.dao.get('image_positives', dict(sentence_id = criteria['sentence_id']))
+        for tech in techniques:
+            name = await self.dao.get('attack_uids', dict(uid=tech['uid']))
+            tmp.append(name[0])
+        return tmp
+    
+    async def image_positive(self, criteria=None):
+        sentence_dict = await self.dao.get('report_sentences', dict(uid=criteria['sentence_id']))
+        sentence_to_insert = await self.web_svc.remove_html_markup_and_found(sentence_dict[0]['text'])
+        await self.dao.insert('image_positives', dict(sentence_id=sentence_dict[0]['uid'], uid=criteria['attack_uid'],
+                                                     true_positive=sentence_to_insert))
+        return dict(status='inserted')
+
     async def true_positive(self, criteria=None):
         sentence_dict = await self.dao.get('report_sentences', dict(uid=criteria['sentence_id']))
         sentence_to_insert = await self.web_svc.remove_html_markup_and_found(sentence_dict[0]['text'])
