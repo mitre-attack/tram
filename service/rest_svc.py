@@ -46,40 +46,25 @@ class RestService:
             return dict(status='Successfully moved sentence ' + criteria['sentence_id'])
 
     async def sentence_context(self, criteria=None):
+        if(criteria['is_image']):
+            return []
         sentence_hits = await self.dao.get('report_sentence_hits', dict(uid=criteria['uid']))
         return sentence_hits
 
     async def confirmed_sentences(self, criteria=None):
         tmp = []
-        techniques = await self.dao.get('true_positives', dict(sentence_id=criteria['sentence_id']))
+        techniques = await self.dao.get('true_positives', 
+                         dict(sentence_id=criteria['sentence_id'], is_image=criteria['is_image']))
         for tech in techniques:
             name = await self.dao.get('attack_uids', dict(uid=tech['uid']))
             tmp.append(name[0])
         return tmp
-
-    async def image_context(self, criteria=None):
-        return []
-
-    async def confirmed_images(self, criteria=None):
-        tmp = []
-        techniques = await self.dao.get('image_positives', dict(sentence_id = criteria['sentence_id']))
-        for tech in techniques:
-            name = await self.dao.get('attack_uids', dict(uid=tech['uid']))
-            tmp.append(name[0])
-        return tmp
-    
-    async def image_positive(self, criteria=None):
-        sentence_dict = await self.dao.get('report_sentences', dict(uid=criteria['sentence_id']))
-        sentence_to_insert = await self.web_svc.remove_html_markup_and_found(sentence_dict[0]['text'])
-        await self.dao.insert('image_positives', dict(sentence_id=sentence_dict[0]['uid'], uid=criteria['attack_uid'],
-                                                     true_positive=sentence_to_insert))
-        return dict(status='inserted')
 
     async def true_positive(self, criteria=None):
         sentence_dict = await self.dao.get('report_sentences', dict(uid=criteria['sentence_id']))
         sentence_to_insert = await self.web_svc.remove_html_markup_and_found(sentence_dict[0]['text'])
         await self.dao.insert('true_positives', dict(sentence_id=sentence_dict[0]['uid'], uid=criteria['attack_uid'],
-                                                     true_positive=sentence_to_insert))
+                                                        true_positive=sentence_to_insert, is_image=criteria['is_image']))
         return dict(status='inserted')
 
     async def false_positive(self, criteria=None):

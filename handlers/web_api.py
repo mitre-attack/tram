@@ -38,7 +38,6 @@ class WebAPI:
                 false_positive=lambda d: self.rest_svc.false_positive(criteria=d),
                 true_positive=lambda d: self.rest_svc.true_positive(criteria=d),
                 false_negative=lambda d: self.rest_svc.false_negative(criteria=d),
-                image_positive=lambda d: self.rest_svc.image_positive(criteria=d),
                 set_status=lambda d: self.rest_svc.set_status(criteria=d),
                 insert_report=lambda d: self.rest_svc.insert_report(criteria=d),
                 remove_sentences=lambda d: self.rest_svc.remove_sentences(criteria=d),
@@ -46,9 +45,6 @@ class WebAPI:
                 sentence_context=lambda d: self.rest_svc.sentence_context(criteria=d),
                 confirmed_sentences=lambda d: self.rest_svc.confirmed_sentences(criteria=d),
                 missing_technique=lambda d: self.rest_svc.missing_technique(criteria=d),
-                image_context=lambda d: self.rest_svc.image_context(criteria=d),
-                confirmed_images=lambda d: self.rest_svc.confirmed_images(criteria=d)
-
             ))
         output = await options[request.method][index](data)
         return web.json_response(output)

@@ -11,6 +11,7 @@ CREATE TABLE if not exists true_positives (
     uid VARCHAR(60),
     sentence_id integer,
     true_positive TEXT,
+    is_image integer,
     FOREIGN KEY(uid) REFERENCES attack_uids(uid)
     );
 
@@ -79,13 +80,5 @@ CREATE TABLE if not exists original_html (
     tag TEXT,
     found_status TEXT
     );
-
-CREATE TABLE if not exists image_positives (
-    uid VARCHAR(60),
-    sentence_id integer,
-    true_positive TEXT,
-    FOREIGN KEY(uid) REFERENCES attack_uids(uid)
-    );
-
 
 --INSERT INTO regex_patterns (attack_uid, regex_pattern) values ("attack-pattern--01df3350-ce05-4bdf-bdf8-0a919a66d4a8", "sometext.*moretext")

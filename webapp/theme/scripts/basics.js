@@ -1,5 +1,5 @@
 var sentence_id = 0
-var image_clicked = false;
+var image_clicked = 0;
 
 function restRequest(type, data, callback) {
     $.ajax({
@@ -94,21 +94,10 @@ function savedAlert(){
     }
  }
 
-function imageContext(data, attack_uid) {
-  image_clicked = true;
-  restRequest('POST', {'index':'image_context', 'uid':data, 'attack_uid':attack_uid}, updateImageContext);
-  restRequest('POST', {'index':'confirmed_images', 'sentence_id': data}, updateConfirmedContext);
-  sentence_id = data;
-}
-
-function updateImageContext(data) {
-  $("#tableSentenceInfo tr").remove()
-}
-
-function sentenceContext(data, attack_uid){
-    image_clicked = false;
-    restRequest('POST', {'index':'sentence_context', 'uid': data, 'attack_uid':attack_uid}, updateSentenceContext);
-    restRequest('POST', {'index':'confirmed_sentences', 'sentence_id': data}, updateConfirmedContext);
+function sentenceContext(data, is_image, attack_uid){
+    image_clicked = is_image ? 1 : 0;
+    restRequest('POST', {'index':'sentence_context', 'uid': data, 'attack_uid':attack_uid, 'is_image':image_clicked}, updateSentenceContext);
+    restRequest('POST', {'index':'confirmed_sentences', 'sentence_id': data, 'is_image':image_clicked}, updateConfirmedContext);
     sentence_id = data;
 }
 
@@ -157,12 +146,7 @@ $(window).resize(function() {
 
 function addMissingTechnique(){
     uid = $("#missingTechniqueSelect :selected").val();
-    if(image_clicked) {
-      restRequest('POST', {'index':'image_positive', 'sentence_id': sentence_id, 'attack_uid':uid}, savedAlert);
-      imageContext(sentence_id, uid)
-    } else {
-      restRequest('POST', {'index':'true_positive', 'sentence_id': sentence_id, 'attack_uid':uid}, savedAlert);
-      sentenceContext(sentence_id, uid)
-    }
+    restRequest('POST', {'index':'true_positive', 'sentence_id': sentence_id, 'attack_uid':uid, 'is_image':image_clicked}, savedAlert);
+    sentenceContext(sentence_id, image_clicked, uid)
 }
 
