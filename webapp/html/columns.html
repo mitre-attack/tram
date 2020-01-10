@@ -36,11 +36,11 @@
     <div class="col reportSentencesDiv">
         {% for elmt in final_html %}
             {% if elmt.tag == 'img' %}
-                <img src="{{elmt.text}}" class="normalImage" onclick="sentenceContext({{elmt.uid}}, true)">
+                <img src="{{elmt.text}}" class="normalImage" onclick="sentenceContext({{elmt.uid}}, 'img')">
             {% elif elmt.found_status == 'true' %}
-                <a class="bg-warning" id="elmt{{elmt.uid}}" onclick="sentenceContext({{elmt.uid}}, false)">{{elmt.text}}</a>
+                <a class="bg-warning" id="elmt{{elmt.uid}}" onclick="sentenceContext({{elmt.uid}}, 'p')">{{elmt.text}}</a>
             {% else %}
-                <a id="elmt{{elmt.uid}}" onclick="sentenceContext({{elmt.uid}}, false)">{{elmt.text}}</a>
+                <a id="elmt{{elmt.uid}}" onclick="sentenceContext({{elmt.uid}}, 'p')">{{elmt.text}}</a>
             {% endif %}
         <br><br>
         {% endfor %}

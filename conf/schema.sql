@@ -11,7 +11,7 @@ CREATE TABLE if not exists true_positives (
     uid VARCHAR(60),
     sentence_id integer,
     true_positive TEXT,
-    is_image integer,
+    element_tag TEXT,
     FOREIGN KEY(uid) REFERENCES attack_uids(uid)
     );
 
