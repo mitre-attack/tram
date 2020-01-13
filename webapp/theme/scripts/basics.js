@@ -1,4 +1,5 @@
 var sentence_id = 0
+var element_clicked_tag = "";
 
 function restRequest(type, data, callback) {
     $.ajax({
@@ -16,10 +17,10 @@ function remove_sentences(){
     restRequest('POST', {'index':'remove_sentences', 'sentence_id':sentence_id}, show_info);
 }
 
-function true_positive(type, id, attack_uid){
+function true_positive(type, id, attack_uid, element_tag){
     $("#sentence" + id).addClass('bg-warning');
-    restRequest('POST', {'index':'true_positive', 'sentence_type':type, 'sentence_id':id, 'attack_uid':attack_uid}, show_info);
-    sentenceContext(id, attack_uid)
+    restRequest('POST', {'index':'true_positive', 'sentence_type':type, 'sentence_id':id, 'attack_uid':attack_uid, 'element_tag':element_tag}, show_info);
+    sentenceContext(id, element_tag, attack_uid)
 }
 
 function false_positive(type, id, attack_uid){
@@ -93,9 +94,10 @@ function savedAlert(){
     }
  }
 
-function sentenceContext(data, attack_uid){
-    restRequest('POST', {'index':'sentence_context', 'uid': data, 'attack_uid':attack_uid}, updateSentenceContext);
-    restRequest('POST', {'index':'confirmed_sentences', 'sentence_id': data}, updateConfirmedContext);
+function sentenceContext(data, element_tag, attack_uid){
+    element_clicked_tag = element_tag
+    restRequest('POST', {'index':'sentence_context', 'uid': data, 'attack_uid':attack_uid, 'element_tag':element_tag}, updateSentenceContext);
+    restRequest('POST', {'index':'confirmed_sentences', 'sentence_id': data, 'element_tag':element_tag}, updateConfirmedContext);
     sentence_id = data;
 }
 
@@ -103,7 +105,7 @@ function updateSentenceContext(data){
     $("#tableSentenceInfo tr").remove()
     $.each(data, function(index, op){
         td1 = "<td><a href=https://attack.mitre.org/techniques/" + op.attack_tid + " target=_blank>" + op.attack_technique_name + "</a></td>"
-        td2 = `<td><button class='btn btn-success' onclick='true_positive(true_positive, ${op.uid}, \"${op.attack_uid}\")'>Accept</button></td>`
+        td2 = `<td><button class='btn btn-success' onclick='true_positive(true_positive, ${op.uid}, \"${op.attack_uid}\", "${op.element_tag}")'>Accept</button></td>`
         td3 = `<td><button class='btn btn-danger' onclick='false_positive(true_positive, ${op.uid}, \"${op.attack_uid}\")'>Reject</button></td>`
         tmp = `<tr id="sentence-tid${op.attack_uid.substr(op.attack_uid.length - 4)}">${td1}${td2}${td3}</tr>`
         $("#tableSentenceInfo").find('tbody').append(tmp);
@@ -144,7 +146,7 @@ $(window).resize(function() {
 
 function addMissingTechnique(){
     uid = $("#missingTechniqueSelect :selected").val();
-    restRequest('POST', {'index':'true_positive', 'sentence_id': sentence_id, 'attack_uid':uid}, savedAlert);
-    sentenceContext(sentence_id, uid)
+    restRequest('POST', {'index':'true_positive', 'sentence_id': sentence_id, 'attack_uid':uid, 'element_tag':element_clicked_tag}, savedAlert);
+    sentenceContext(sentence_id, element_clicked_tag, uid)
 }
 

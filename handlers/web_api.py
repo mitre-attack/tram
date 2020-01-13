@@ -45,7 +45,6 @@ class WebAPI:
                 sentence_context=lambda d: self.rest_svc.sentence_context(criteria=d),
                 confirmed_sentences=lambda d: self.rest_svc.confirmed_sentences(criteria=d),
                 missing_technique=lambda d: self.rest_svc.missing_technique(criteria=d)
-
             ))
         output = await options[request.method][index](data)
         return web.json_response(output)

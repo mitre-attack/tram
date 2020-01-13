@@ -9,6 +9,11 @@
         padding-top: 10px;
     }
 
+    .selectDropdownWidth {
+        width: 100%;
+        max-width: 350px;
+    }
+
     .normalImage {
         display: block;
         max-height: 700px;
@@ -36,11 +41,11 @@
     <div class="col reportSentencesDiv">
         {% for elmt in final_html %}
             {% if elmt.tag == 'img' %}
-                <img src="{{elmt.text}}" class="normalImage">
+                <img src="{{elmt.text}}" class="normalImage" onclick="sentenceContext({{elmt.uid}}, 'img')">
             {% elif elmt.found_status == 'true' %}
-                <a class="bg-warning" id="elmt{{elmt.uid}}" onclick="sentenceContext({{elmt.uid}})">{{elmt.text}}</a>
+                <a class="bg-warning" id="elmt{{elmt.uid}}" onclick="sentenceContext({{elmt.uid}}, 'p')">{{elmt.text}}</a>
             {% else %}
-                <a id="elmt{{elmt.uid}}" onclick="sentenceContext({{elmt.uid}})">{{elmt.text}}</a>
+                <a id="elmt{{elmt.uid}}" onclick="sentenceContext({{elmt.uid}}, 'p')">{{elmt.text}}</a>
             {% endif %}
         <br><br>
         {% endfor %}
@@ -75,10 +80,10 @@
                     Add A Missing Technique
                 </span> <br><br>
             <div class="container">
-                <div class="row-fluid">
+                <div class="row">
                   <select id="missingTechniqueSelect" class="selectpicker" data-show-subtext="true" data-live-search="true">
                       {% for tech in attack_uids %}
-                    <option style="overflow: visible" value="{{tech.uid}}">{{tech.name}}</option>
+                    <option class="selectDropdownWidth" style="overflow: visible" value="{{tech.uid}}">{{tech.name}}</option>
                       {% endfor %}
                   </select>
                 </div>
@@ -94,7 +99,6 @@
 
 
     </div>
-</div>
 
 
 
