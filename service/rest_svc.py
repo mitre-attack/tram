@@ -2,7 +2,8 @@ import json
 import asyncio
 import queue
 from concurrent.futures import ProcessPoolExecutor
-from multiprocessing import Process
+from multiprocessing import Process, Pool
+from time import sleep
 
 class RestService:
 
@@ -12,9 +13,8 @@ class RestService:
         self.web_svc = web_svc
         self.ml_svc = ml_svc
         self.reg_svc = reg_svc
-        self.loop = asyncio.get_event_loop()
         self.queue = queue.SimpleQueue()
-        self.executor = ProcessPoolExecutor(2)
+        self.monitor = Pool(1)
 
     async def false_negative(self, criteria=None):
         sentence_dict = await self.dao.get('report_sentences', dict(uid=criteria['sentence_id']))
@@ -82,29 +82,27 @@ class RestService:
         self.queue.put(criteria)
         #future = asyncio.Future()
         #loop = asyncio.get_event_loop()
-        p = Process(target=self.check_queue)
-        p.start()
-        #task = loop.run_in_executor(self.executor, self.check_queue)
-        '''
-        loop = asyncio.get_event_loop()
-        with concurrent.futures.ThreadPoolExecutor() as pool:
-            result = await loop.run_in_executor(
-                pool, self.check_queue)
-            print('custom thread pool', result)
-        '''
-        #await task
-        # add to report queue here...
-        # Queue()
-        # Don't execute task creations right here right now. pull from queue then execute                                                    
+        #loop.create_task(self.check_queue())
+        self.monitor.apply_async(self.check_queue())
+        #p = Process(target=self.check_queue) # Process method, potentially dangerous
+        #p.start()
+        #task = loop.run_in_executor(self.executor, self.check_queue)                                            
         # self.loop.create_task(self.start_analysis(criteria))
-
+    
     def check_queue(self):
-        loop = asyncio.new_event_loop()
+        #loop = asyncio.new_event_loop()
         while(not self.queue.empty()):
             to_process = self.queue.get()
-            print(to_process)
-            loop.run_until_complete(self.start_analysis(to_process))
-            #future.set_result(None)
+            #while(self.max_proc > 4):
+            #    sleep(1)
+            # loop.run_until_complete(self.start_analysis(to_process))
+            p = Process(target=self.analysis_wrapper,args=(to_process,))
+            p.start()
+            
+
+    def analysis_wrapper(self,criteria):
+        loop = asyncio.new_event_loop()
+        loop.run_until_complete(self.start_analysis(criteria))
 
     async def start_analysis(self, criteria=None):
         tech_data = await self.dao.get('attack_uids')
