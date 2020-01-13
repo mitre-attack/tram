@@ -9,6 +9,11 @@
         padding-top: 10px;
     }
 
+    .selectDropdownWidth {
+        width: 100%;
+        max-width: 350px;
+    }
+
     .normalImage {
         display: block;
         max-height: 700px;
@@ -61,7 +66,7 @@
             <br><br>
             <span class='spanMissingTechniqueView'>
                     Confirmed Techniques
-                </span>
+            </span>
             <br><br>
             <div id="confirmedsentenceInformation">
                 <table id="confirmedSentenceInfo" class="table">
@@ -71,29 +76,27 @@
                 </table>
             </div>
             <hr><br><br>
-             <span class='spanAddMissingTechnique'>
+            <span class='spanAddMissingTechnique'>
                     Add A Missing Technique
-                </span> <br><br>
+            </span> <br><br>
+
             <div class="container">
-                <div class="row-fluid">
+                <div class="row">
                   <select id="missingTechniqueSelect" class="selectpicker" data-show-subtext="true" data-live-search="true">
                       {% for tech in attack_uids %}
-                    <option style="overflow: visible" value="{{tech.uid}}">{{tech.name}}</option>
+                    <option class="selectDropdownWidth" style="overflow: visible" value="{{tech.uid}}">{{tech.name}}</option>
                       {% endfor %}
                   </select>
                 </div>
+            </div>
+            
         </div>
-            <br>
-            &nbsp;&nbsp;&nbsp;<button onclick="addMissingTechnique()" class="btn btn-md btn-outline-primary">Add Technique</button> <br><br>
-        </div>
-
-
-
-        <br><br>
-        <br><br>
-
-
+        <br>
+        &nbsp;&nbsp;&nbsp;<button onclick="addMissingTechnique()" class="btn btn-md btn-outline-primary">Add Technique</button> <br><br>
     </div>
+
+    <br><br>
+    <br><br>    
 </div>
 
 
