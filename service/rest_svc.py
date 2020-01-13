@@ -1,6 +1,8 @@
 import json
 import asyncio
-
+import queue
+from concurrent.futures import ProcessPoolExecutor
+from multiprocessing import Process
 
 class RestService:
 
@@ -11,6 +13,8 @@ class RestService:
         self.ml_svc = ml_svc
         self.reg_svc = reg_svc
         self.loop = asyncio.get_event_loop()
+        self.queue = queue.SimpleQueue()
+        self.executor = ProcessPoolExecutor(2)
 
     async def false_negative(self, criteria=None):
         sentence_dict = await self.dao.get('report_sentences', dict(uid=criteria['sentence_id']))
@@ -75,7 +79,32 @@ class RestService:
     async def insert_report(self, criteria=None):
         criteria['id'] = await self.dao.insert('reports', dict(title=criteria['title'], url=criteria['url'],
                                                                current_status="needs_review"))
-        self.loop.create_task(self.start_analysis(criteria))
+        self.queue.put(criteria)
+        #future = asyncio.Future()
+        #loop = asyncio.get_event_loop()
+        p = Process(target=self.check_queue)
+        p.start()
+        #task = loop.run_in_executor(self.executor, self.check_queue)
+        '''
+        loop = asyncio.get_event_loop()
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            result = await loop.run_in_executor(
+                pool, self.check_queue)
+            print('custom thread pool', result)
+        '''
+        #await task
+        # add to report queue here...
+        # Queue()
+        # Don't execute task creations right here right now. pull from queue then execute                                                    
+        # self.loop.create_task(self.start_analysis(criteria))
+
+    def check_queue(self):
+        loop = asyncio.new_event_loop()
+        while(not self.queue.empty()):
+            to_process = self.queue.get()
+            print(to_process)
+            loop.run_until_complete(self.start_analysis(to_process))
+            #future.set_result(None)
 
     async def start_analysis(self, criteria=None):
         tech_data = await self.dao.get('attack_uids')
