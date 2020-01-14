@@ -1,7 +1,6 @@
 import json
 import asyncio
 import queue
-from concurrent.futures import ProcessPoolExecutor
 from multiprocessing import Process, Pool, Pipe, cpu_count
 from time import sleep
 
@@ -14,8 +13,8 @@ class RestService:
         self.ml_svc = ml_svc
         self.reg_svc = reg_svc
         self.resources = []
-        self.monitor,child_conn = Pipe()
-        self.process_manager = Process(target=self.check_queue,args=(child_conn,)).start()
+        self.monitor,child_conn = Pipe() # create pipe for server to comm with manager process
+        self.process_manager = Process(target=self.check_queue,args=(child_conn,)).start() # create manager process
 
     async def false_negative(self, criteria=None):
         sentence_dict = await self.dao.get('report_sentences', dict(uid=criteria['sentence_id']))
@@ -80,15 +79,8 @@ class RestService:
     async def insert_report(self, criteria=None):
         criteria['id'] = await self.dao.insert('reports', dict(title=criteria['title'], url=criteria['url'],
                                                                current_status="needs_review"))
-        #future = asyncio.Future()
-        #loop = asyncio.get_event_loop()
-        #loop.r
-        #self.monitor.apply_async(self.check_queue())
-        self.monitor.send(criteria)
-        #p = Process(target=self.check_queue) 
-        #p.start()
-        #task = loop.run_in_executor(self.executor, self.check_queue)                                            
-        # self.loop.create_task(self.start_analysis(criteria))
+        
+        self.monitor.send(criteria) # send needed data to monitor process
     
     def check_queue(self,conn):
         '''
@@ -97,21 +89,21 @@ class RestService:
         input: pipe connection
         output: nil
         '''
-        resources = []
-        man_queue = queue.SimpleQueue()
-        max_workers = cpu_count()
+        resources = [] # currently running processes
+        man_queue = queue.SimpleQueue() # manager queue for work to be done
+        max_workers = cpu_count() # num workers based on num cpus
         while(True):
-            man_queue.put(conn.recv())
+            man_queue.put(conn.recv()) # get data from pipe
             while(not man_queue.empty()):
                 for proc in range(len(resources)):
                     if(not resources[proc].is_alive()):
-                        del resources[proc]
-                if(len(resources) > max_workers):
-                    sleep(1)
+                        del resources[proc] # if the process is finished, or dead, remove it from resources
+                if(len(resources) >= max_workers):
+                    sleep(1) # wait if resources are maxed
                     print("Processing data, current processing workers: {}".format(resources))
                 else:
-                    to_process = man_queue.get()
-                    p = Process(target=self.analysis_wrapper,args=(to_process,))
+                    to_process = man_queue.get() # get next thing to do off queue
+                    p = Process(target=self.analysis_wrapper,args=(to_process,)) # and analyze it
                     resources.append(p)
                     p.start()
             
