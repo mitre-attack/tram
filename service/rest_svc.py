@@ -2,7 +2,7 @@ import json
 import asyncio
 import queue
 from concurrent.futures import ProcessPoolExecutor
-from multiprocessing import Process, Pool, Pipe
+from multiprocessing import Process, Pool, Pipe, cpu_count
 from time import sleep
 
 class RestService:
@@ -13,7 +13,6 @@ class RestService:
         self.web_svc = web_svc
         self.ml_svc = ml_svc
         self.reg_svc = reg_svc
-        self.queue = queue.SimpleQueue()
         self.resources = []
         self.monitor,child_conn = Pipe()
         self.process_manager = Process(target=self.check_queue,args=(child_conn,)).start()
@@ -78,63 +77,38 @@ class RestService:
                                                       false_positive=sentence_to_insert))
         return dict(status='inserted', last=last)
 
-
-
-    '''
-    For CPU bound processes run these
-    loop = asyncio.get_running_loop()
-
-    ## Options:
-
-    # 1. Run in the default loop's executor:
-    result = await loop.run_in_executor(
-        None, blocking_io)
-    print('default thread pool', result)
-
-    # 2. Run in a custom thread pool:
-    with concurrent.futures.ThreadPoolExecutor() as pool:
-        result = await loop.run_in_executor(
-            pool, blocking_io)
-        print('custom thread pool', result)
-
-    # 3. Run in a custom process pool:
-    with concurrent.futures.ProcessPoolExecutor() as pool:
-        result = await loop.run_in_executor(
-            pool, cpu_bound)
-        print('custom process pool', result)
-    '''
-
-
     async def insert_report(self, criteria=None):
         criteria['id'] = await self.dao.insert('reports', dict(title=criteria['title'], url=criteria['url'],
                                                                current_status="needs_review"))
-        self.queue.put(criteria)
         #future = asyncio.Future()
         #loop = asyncio.get_event_loop()
         #loop.r
         #self.monitor.apply_async(self.check_queue())
-        self.monitor.send(self.queue.get())
-        print("DONE WITH MONITORING")
+        self.monitor.send(criteria)
         #p = Process(target=self.check_queue) 
         #p.start()
         #task = loop.run_in_executor(self.executor, self.check_queue)                                            
         # self.loop.create_task(self.start_analysis(criteria))
     
     def check_queue(self,conn):
-        #loop = asyncio.new_event_loop()
+        '''
+        description: runs as a child process that spawns worker processes via the multiprocessing library
+        acts as manager for concurrent report analysis
+        input: pipe connection
+        output: nil
+        '''
         resources = []
         man_queue = queue.SimpleQueue()
+        max_workers = cpu_count()
         while(True):
             man_queue.put(conn.recv())
             while(not man_queue.empty()):
-                print(man_queue.qsize())
                 for proc in range(len(resources)):
                     if(not resources[proc].is_alive()):
                         del resources[proc]
-
-                print("resource usage is {}".format(resources))
-                if(len(resources) > 0):
+                if(len(resources) > max_workers):
                     sleep(1)
+                    print("Processing data, current processing workers: {}".format(resources))
                 else:
                     to_process = man_queue.get()
                     p = Process(target=self.analysis_wrapper,args=(to_process,))
@@ -143,6 +117,11 @@ class RestService:
             
 
     def analysis_wrapper(self,criteria):
+        '''
+        description: Acts as child process to run event loop for analysis
+        input: criteria
+        output: nil
+        '''
         loop = asyncio.new_event_loop()
         loop.run_until_complete(self.start_analysis(criteria))
 
