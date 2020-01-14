@@ -77,9 +77,9 @@ class RestService:
         return dict(status='inserted', last=last)
 
     async def insert_report(self, criteria=None):
-        criteria['id'] = await self.dao.insert('reports', dict(title=criteria['title'], url=criteria['url'],
-                                                               current_status="needs_review"))
-        
+        #criteria['id'] = await self.dao.insert('reports', dict(title=criteria['title'], url=criteria['url'],
+        #                                                       current_status="needs_review"))
+        criteria = dict(title=criteria['title'], url=criteria['url'],current_status="needs_review")
         self.monitor.send(criteria) # send needed data to monitor process
     
     def check_queue(self,conn):
@@ -148,7 +148,6 @@ class RestService:
         original_html = await self.web_svc.map_all_html(criteria['url'])
 
         article = dict(title=criteria['title'], html_text=html_data)
-        report_id = criteria['id']
         list_of_legacy, list_of_techs = await self.data_svc.ml_reg_split(json_tech)
 
         true_negatives = await self.ml_svc.get_true_negs()
@@ -163,6 +162,9 @@ class RestService:
         # Merge ML and Reg hits
         analyzed_html = await self.ml_svc.combine_ml_reg(ml_analyzed_html, reg_analyzed_html)
 
+        criteria['id'] = await self.dao.insert('reports', dict(title=criteria['title'], url=criteria['url'],
+                                                                            current_status="needs_review"))
+        report_id = criteria['id']
         for sentence in analyzed_html:
             if sentence['ml_techniques_found']:
                 await self.ml_svc.ml_techniques_found(report_id, sentence)
