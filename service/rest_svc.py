@@ -80,9 +80,11 @@ class RestService:
         #criteria['id'] = await self.dao.insert('reports', dict(title=criteria['title'], url=criteria['url'],
         #                                                       current_status="needs_review"))
         criteria = dict(title=criteria['title'], url=criteria['url'],current_status="needs_review")
-        self.monitor.send(criteria) # send needed data to monitor process
+        asyncio.create_task(self.check_queue(criteria)) # self.monitor.send(criteria) # send needed data to monitor process
+        await asyncio.sleep(0.01)
     
-    def check_queue(self,conn):
+
+    async def check_queue(self,conn):
         '''
         description: runs as a child process that spawns worker processes via the multiprocessing library
         acts as manager for concurrent report analysis
@@ -90,22 +92,30 @@ class RestService:
         output: nil
         '''
         resources = [] # currently running processes
-        man_queue = queue.SimpleQueue() # manager queue for work to be done
-        max_workers = cpu_count() # num workers based on num cpus
+        man_queue = asyncio.Queue() # manager queue for work to be done
+        max_workers = 1#cpu_count() # num workers based on num cpus
         while(True):
-            man_queue.put(conn.recv()) # get data from pipe
+            
+            print(conn)
+            await man_queue.put(conn) # get data from pipe
+            print(man_queue)
             while(not man_queue.empty()):
                 for proc in range(len(resources)):
                     if(not resources[proc].is_alive()):
                         del resources[proc] # if the process is finished, or dead, remove it from resources
                 if(len(resources) >= max_workers):
-                    sleep(1) # wait if resources are maxed
+                    await asyncio.sleep(1) # wait if resources are maxed
                     print("Processing data, current processing workers: {}".format(resources))
                 else:
-                    to_process = man_queue.get() # get next thing to do off queue
-                    p = Process(target=self.analysis_wrapper,args=(to_process,)) # and analyze it
-                    resources.append(p)
-                    p.start()
+                    to_process = await man_queue.get() # get next thing to do off queue
+                    resources.append(to_process)
+                    await self.start_analysis(to_process)
+                    #p = Process(target=self.analysis_wrapper,args=(to_process,)) # and analyze it
+                    #resources.append(p)
+                    #p.start()
+            print("BEFORE!!!!")
+            await asyncio.sleep(0.0001)
+            print("AFTER!!!!")
             
 
     def analysis_wrapper(self,criteria):
@@ -120,9 +130,9 @@ class RestService:
     async def start_analysis(self, criteria=None):
         tech_data = await self.dao.get('attack_uids')
         json_tech = json.load(open("models/attack_dict.json", "r", encoding="utf_8"))
-
         techniques = {}
         for row in tech_data:
+            await asyncio.sleep(0.01)
             # skip software
             if 'tool' in row['tid'] or 'malware' in row['tid']:
                 continue
