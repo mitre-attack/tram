@@ -12,9 +12,10 @@ class RestService:
         self.web_svc = web_svc
         self.ml_svc = ml_svc
         self.reg_svc = reg_svc
+        self.queue = asyncio.Queue()
         self.resources = []
-        self.monitor,child_conn = Pipe() # create pipe for server to comm with manager process
-        self.process_manager = Process(target=self.check_queue,args=(child_conn,)).start() # create manager process
+        #self.monitor,child_conn = Pipe() # create pipe for server to comm with manager process
+        #self.process_manager = Process(target=self.check_queue,args=(child_conn,)).start() # create manager process
 
     async def false_negative(self, criteria=None):
         sentence_dict = await self.dao.get('report_sentences', dict(uid=criteria['sentence_id']))
@@ -80,42 +81,58 @@ class RestService:
         #criteria['id'] = await self.dao.insert('reports', dict(title=criteria['title'], url=criteria['url'],
         #                                                       current_status="needs_review"))
         criteria = dict(title=criteria['title'], url=criteria['url'],current_status="needs_review")
-        asyncio.create_task(self.check_queue(criteria)) # self.monitor.send(criteria) # send needed data to monitor process
+        await self.queue.put(criteria)
+        task = asyncio.create_task(self.check_queue()) # self.monitor.send(criteria) # send needed data to monitor process
         await asyncio.sleep(0.01)
     
 
-    async def check_queue(self,conn):
+    async def check_queue(self):
         '''
         description: runs as a child process that spawns worker processes via the multiprocessing library
         acts as manager for concurrent report analysis
         input: pipe connection
         output: nil
         '''
-        resources = [] # currently running processes
-        man_queue = asyncio.Queue() # manager queue for work to be done
-        max_workers = 1#cpu_count() # num workers based on num cpus
-        while(True):
-            
-            print(conn)
-            await man_queue.put(conn) # get data from pipe
-            print(man_queue)
-            while(not man_queue.empty()):
-                for proc in range(len(resources)):
-                    if(not resources[proc].is_alive()):
-                        del resources[proc] # if the process is finished, or dead, remove it from resources
-                if(len(resources) >= max_workers):
-                    await asyncio.sleep(1) # wait if resources are maxed
-                    print("Processing data, current processing workers: {}".format(resources))
-                else:
-                    to_process = await man_queue.get() # get next thing to do off queue
-                    resources.append(to_process)
-                    await self.start_analysis(to_process)
-                    #p = Process(target=self.analysis_wrapper,args=(to_process,)) # and analyze it
-                    #resources.append(p)
-                    #p.start()
+        for task in range(len(self.resources)):
+            if(self.resources[task].done()):
+                del self.resources[task]
+
+        max_tasks = 1
+        if(len(self.resources) >= max_tasks):
+            while(len(self.resources) >= max_tasks):
+                for task in range(len(self.resources)):
+                    if(self.resources[task].done()):
+                        del self.resources[task]
+                await asyncio.sleep(1) # figure out something to do here
+            criteria = await self.queue.get()
+            task = asyncio.create_task(self.start_analysis(criteria))
+            self.resources.append(task)
+        else:
+            criteria = await self.queue.get()
+            task = asyncio.create_task(self.start_analysis(criteria))
+            self.resources.append(task)
+
+        '''max_workers = 1#cpu_count() # num workers based on num cpus
+        print(conn)
+        await self.queue.put(conn) # get data from pipe
+        print(self.queue)
+        while(not self.queue.empty()):
+            for proc in range(len(self.resources)):
+                if(not self.resources[proc].is_alive()):
+                    del self.resources[proc] # if the process is finished, or dead, remove it from self.resources
+            if(len(self.resources) >= max_workers):
+                await asyncio.sleep(1) # wait if self.resources are maxed
+                print("Processing data, current processing workers: {}".format(self.resources))
+            else:
+                to_process = await self.queue.get() # get next thing to do off queue
+                self.resources.append(to_process)
+                await self.start_analysis(to_process)
+                #p = Process(target=self.analysis_wrapper,args=(to_process,)) # and analyze it
+                #self.resources.append(p)
+                #p.start()
             print("BEFORE!!!!")
             await asyncio.sleep(0.0001)
-            print("AFTER!!!!")
+            print("AFTER!!!!")'''
             
 
     def analysis_wrapper(self,criteria):
@@ -187,6 +204,7 @@ class RestService:
         for element in original_html:
             html_element = dict(report_uid=report_id, text=element['text'], tag=element['tag'], found_status="false")
             await self.dao.insert('original_html', html_element)
+        
 
     async def missing_technique(self, criteria=None):
         attack_uid = await self.dao.get('attack_uids', dict(tid=criteria['tid']))
