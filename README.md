@@ -1,6 +1,6 @@
 # TRAM v0.1
 
-Threat Report ATT&CK<sup>™</sup> Mapping (TRAM) is a tool to aid analyst in mapping finished reports to ATT&CK. TRAM is currently in its beta phase and is actively being developed.
+Threat Report ATT&CK<sup>®</sup> Mapping (TRAM) is a tool to aid analyst in mapping finished reports to ATT&CK. TRAM is currently in its beta phase and is actively being developed.
 
 ## Requirements
 - [python3](https://www.python.org/) (3.6.1+)
@@ -48,7 +48,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) to better understand what we're looking 
 
 ## Notice
 
-Copyright 2019 The MITRE Corporation
+Copyright ® 2019-2020 The MITRE Corporation
 
 Approved for Public Release; Distribution Unlimited. Case Number 19-3429.
 
@@ -58,6 +58,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-This project makes use of ATT&CK<sup>™</sup>
+This project makes use of ATT&CK<sup>®</sup>
 
 [ATT&CK Terms of Use](https://attack.mitre.org/resources/terms-of-use/)

@@ -83,11 +83,11 @@
                 <div class="row">
                   <select id="missingTechniqueSelect" class="selectpicker" data-show-subtext="true" data-live-search="true">
                       {% for tech in attack_uids %}
-                    <option class="selectDropdownWidth" style="overflow: visible" value="{{tech.uid}}">{{tech.name}}</option>
+                    <option class="selectDropdownWidth" style="overflow: scroll" value="{{tech.uid}}">{{tech.name}}</option>
                       {% endfor %}
                   </select>
                 </div>
-        </div>
+            </div>
             <br>
             &nbsp;&nbsp;&nbsp;<button onclick="addMissingTechnique()" class="btn btn-md btn-outline-primary">Add Technique</button> <br><br>
         </div>
