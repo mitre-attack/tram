@@ -16,6 +16,12 @@ From the root of this project, install the PIP requirements.
 pip install -r requirements.txt
 ```
 
+and download a spaCy model:
+
+```
+python -m spacy download en_core_web_md
+```
+
 Change server defaults:
 ``` console
 $ python tram.py -H
