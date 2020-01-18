@@ -15,12 +15,6 @@ From the root of this project, install the PIP requirements.
 ```
 pip install -r requirements.txt
 ```
-If you've never started the project before, you'll need to download the `punkt` and `stopwords` nltk packs before using the application. In a terminal, start a Python REPL and enter the following commands:
-```python
-import nltk
-nltk.download('punkt')
-nltk.download('stopwords')
-```
 
 Change server defaults:
 ``` console

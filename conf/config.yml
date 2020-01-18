@@ -5,4 +5,4 @@ port: 9999
 taxii-local: taxii-server
 build: True
 json_file: enterprise-attack.json
-
+spacy_model: en_core_web_md
