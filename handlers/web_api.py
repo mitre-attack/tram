@@ -1,5 +1,6 @@
 from aiohttp_jinja2 import template, web
 import nltk
+import json
 
 
 class WebAPI:
@@ -62,6 +63,81 @@ class WebAPI:
         original_html = await self.dao.get('original_html', dict(report_uid=report_needed[0]['uid']))
         final_html = await self.web_svc.build_final_html(original_html, sentences)
         return dict(file=request.match_info.get('file'), title=report_needed[0]['title'], sentences=sentences, attack_uids=attack_uids, original_html=original_html, final_html=final_html)
+
+    async def nav_export(self, request):
+        """
+        Function to export confirmed sentences in layer json format
+        :param request: The title of the report information
+        :return: the layer json
+        """        
+        # Get the report information
+        report_needed = await self.dao.get('reports', dict(title=request.match_info.get('file')))
+        report_id = report_needed[0]['uid']
+        report_title = report_needed[0]['title']
+
+        # Create the layer name and description
+        layer_name = f"{report_title}"
+        enterprise_layer_description = f"Enterprise techniques used by {report_title}, ATT&CK"
+        version = '1.0'
+        if (version): # add version number if it exists
+            enterprise_layer_description += f" v{version}"
+
+        # Enterprise navigator layer
+        enterprise_layer = {}
+        enterprise_layer['description'] = enterprise_layer_description
+        enterprise_layer['name'] = layer_name
+        enterprise_layer['domain'] = "mitre-enterprise"
+        enterprise_layer['version'] = "2.2"
+        enterprise_layer['techniques'] = []
+        enterprise_layer["gradient"] = { # white for nonused, blue for used
+		    "colors": [
+			    "#ffffff",
+    			"#66b1ff"
+	    	],
+		    "minValue": 0,
+    		"maxValue": 1
+	    }
+        enterprise_layer['legendItems'] = [{
+            'label': f'used by {report_title}',
+            'color': "#66b1ff"
+        }]
+
+        # Get techniques from database
+        techniques = []
+        sentences = await self.dao.get('report_sentences', dict(report_uid=report_id))
+        for sentence in sentences:
+            sentence_id = sentence['uid']
+            hits = await self.dao.get('report_sentence_hits', dict(uid=sentence_id))
+            for hit in hits:
+                # 'hits' object doesn't provide all the information we need, so we
+                # do a makeshift join here to get that information from the attack_uid
+                # list. This is ineffecient, and a way to improve this would be to perform
+                # a join on the database side
+                attack_uid = hit['attack_uid'] 
+                attack_tid = hit['attack_tid'] 
+                # query for true positive
+                true_pos = await self.dao.get('true_positives', dict(uid=attack_uid, sentence_id=sentence_id))
+                for tp in true_pos:
+                    technique = {}
+                    technique['score'] = 1
+                    technique['techniqueID'] = attack_tid
+                    technique['comment'] = tp['true_positive']
+                    techniques.append(technique)
+                # query for false negatives
+                false_neg = await self.dao.get('false_negatives', dict(uid=attack_uid, sentence_id=sentence_id))
+                for fn in false_neg:
+                    technique['score'] = 1
+                    technique['techniqueID'] = attack_tid
+                    technique['comment'] = fn['false_negative']
+                    techniques.append(technique)
+            
+        # Append techniques to enterprise layer
+        if technique is not None:
+            enterprise_layer['techniques'].append(techniques)
+            
+        # Return the layer JSON in the response
+        layer = json.dumps(enterprise_layer)
+        return web.json_response(layer)
 
     async def pdf_export(self, request):
         """
