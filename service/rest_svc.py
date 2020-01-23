@@ -147,3 +147,43 @@ class RestService:
         await self.true_positive(criteria)
         return attack_uid[0]['uid']
 
+    async def build_models(self, criteria=None):
+        """
+        This is a new api function to force a rebuild of the ML models. This is intended to be kicked off in the background at some point
+        :return: status of rebuild
+        """
+        # get techniques from database
+        tech_data = await self.dao.get('attack_uids')
+        techniques = {}
+        for row in tech_data:
+            # skip software for now
+            if 'tool' in row['tid'] or 'malware' in row['tid']:
+                continue
+            else:
+                # query for true positives
+                true_pos = await self.dao.get('true_positives', dict(uid=row['uid']))
+                tp = []
+                for t in true_pos:
+                    tp.append(t['true_positive'])
+                # query for false negatives and false positives
+                false_neg = await self.dao.get('false_negatives', dict(uid=row['uid']))
+                false_positives = await self.dao.get('false_positives', dict(uid=row['uid']))
+                for f in false_neg:
+                    tp.append(f['false_negative'])
+                fp = []
+                for fps in false_positives:
+                    fp.append(fps['false_positive'])
+
+                techniques[row['uid']] = {'id': row['tid'], 'name': row['name'], 'similar_words': [],
+                                          'example_uses': tp, 'false_positives': fp}
+
+        # query for true negatives
+        true_negatives = []
+        true_negs = await self.dao.get('true_negatives')
+        for i in true_negs:
+            true_negatives.append(i['sentence'])
+        list_of_legacy, list_of_techs = await self.data_svc.ml_reg_split(techniques)
+        await self.ml_svc.build_pickle_file(list_of_techs, techniques, true_negatives, force=True)
+
+        return {'text': 'ML Rebuilt!'}
+

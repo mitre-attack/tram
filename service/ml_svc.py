@@ -23,7 +23,7 @@ class MLService:
         for k, v in techniques.items():
             if v['name'] == tech_name:
                 for i in v['example_uses']:
-                    lst1.append(self.web_svc.tokenize(self, i))
+                    lst1.append(self.web_svc.tokenize(i))
                     lst2.append(True)
                     len_truelabels += 1
                     getuid = k
@@ -32,7 +32,7 @@ class MLService:
                     sampling.append(fp)
             else:
                 for i in v['example_uses']:
-                    false_list.append(self.web_svc.tokenize(self, i))
+                    false_list.append(self.web_svc.tokenize(i))
 
         # at least 90% of total labels for both classes, use this for determining how many labels to use for classifier's negative class
         kval = int((len_truelabels * 10))
@@ -71,7 +71,7 @@ class MLService:
         df2['category'] = y_pred.tolist()
         return df2
 
-    async def build_pickle_file(self, list_of_techs, techniques, force=False):
+    async def build_pickle_file(self, list_of_techs, techniques, true_negatives, force=False):
         if not os.path.isfile('models/model_dict.p') or force:
             model_dict = {}
             total = len(list_of_techs)
@@ -81,7 +81,7 @@ class MLService:
             for i in list_of_techs:
                 print('[#] Building.... {}/{}'.format(count, total))
                 count += 1
-                model_dict[i] = self.build_models(self, i, techniques)
+                model_dict[i] = await self.build_models(i, techniques, true_negatives)
             print('[#] Saving models to pickled file: model_dict.p')
             pickle.dump(model_dict, open('models/model_dict.p', 'wb'))
         else:

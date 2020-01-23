@@ -58,6 +58,10 @@ function submit_report(){
     restRequest('POST', {'index':'insert_report', 'url':url, 'title':title}, show_info);
 }
 
+function build_models(){
+    restRequest('POST', {'index':'build_models'}, show_info);
+}
+
 function show_dropdown() {
   document.getElementById("myDropdown").classList.toggle("show");
 }
@@ -149,4 +153,3 @@ function addMissingTechnique(){
     restRequest('POST', {'index':'true_positive', 'sentence_id': sentence_id, 'attack_uid':uid, 'element_tag':element_clicked_tag}, savedAlert);
     sentenceContext(sentence_id, element_clicked_tag, uid)
 }
-
