@@ -1,4 +1,4 @@
-# TRAM v0.1
+# TRAM v0.5
 
 Threat Report ATT&CK<sup>®</sup> Mapping (TRAM) is a tool to aid analyst in mapping finished reports to ATT&CK. TRAM is currently in its beta phase and is actively being developed.
 ​
