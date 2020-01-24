@@ -6,6 +6,7 @@ import newspaper
 from nltk.stem import SnowballStemmer
 from html2text import html2text
 from bs4 import BeautifulSoup
+import asyncio
 
 
 class WebService:
@@ -22,6 +23,7 @@ class WebService:
         # Loop through pt one by one, matching its line with a forward-advancing pointer on the html
         counter = 0
         for pt in plaintext:
+            await asyncio.sleep(0.01)
             words = pt.split(' ')
             first_word = words[0]
             text_match_found = False
@@ -100,6 +102,7 @@ class WebService:
         lemmed = []
         stemmer = SnowballStemmer('english')
         for i in filtered_words:
+            await asyncio.sleep(0.001)
             lemmed.append(stemmer.stem(str(i)))
         return ' '.join(lemmed)
 
@@ -126,6 +129,7 @@ class WebService:
         if returned_format == 'html':
             print('[!] HTML support is being refactored. Currently data is being returned plaintext')
         r = requests.get(url)
+        await asyncio.sleep(0.01)
 
         b = newspaper.fulltext(r.text)
         return str(b).replace('\n', '<br>') if b else None

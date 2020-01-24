@@ -1,7 +1,6 @@
 import json
 import asyncio
 
-
 class RestService:
 
     def __init__(self, web_svc, reg_svc, data_svc, ml_svc, dao):
@@ -10,7 +9,8 @@ class RestService:
         self.web_svc = web_svc
         self.ml_svc = ml_svc
         self.reg_svc = reg_svc
-        self.loop = asyncio.get_event_loop()
+        self.queue = asyncio.Queue() # task queue
+        self.resources = [] # resource array
 
     async def false_negative(self, criteria=None):
         sentence_dict = await self.dao.get('report_sentences', dict(uid=criteria['sentence_id']))
@@ -78,16 +78,47 @@ class RestService:
         return dict(status='inserted', last=last)
 
     async def insert_report(self, criteria=None):
-        criteria['id'] = await self.dao.insert('reports', dict(title=criteria['title'], url=criteria['url'],
-                                                               current_status="needs_review"))
-        self.loop.create_task(self.start_analysis(criteria))
+        #criteria['id'] = await self.dao.insert('reports', dict(title=criteria['title'], url=criteria['url'],
+        #                                                       current_status="needs_review"))
+        criteria = dict(title=criteria['title'], url=criteria['url'],current_status="needs_review")
+        await self.queue.put(criteria)
+        asyncio.create_task(self.check_queue()) # check queue background task
+        await asyncio.sleep(0.01)
+    
+
+    async def check_queue(self):
+        '''
+        description: executes as concurrent job, manages taking jobs off the queue and executing them.
+        If a job is already being processed, wait until that job is done, then execute next job on queue.
+        input: nil
+        output: nil
+        '''
+        for task in range(len(self.resources)): # check resources for finished tasks
+            if(self.resources[task].done()):
+                del self.resources[task] # delete finished tasks
+
+        max_tasks = 1
+        if(len(self.resources) >= max_tasks): # if the resource pool is maxed out...
+            while(len(self.resources) >= max_tasks): # check resource pool until a task is finished
+                for task in range(len(self.resources)):
+                    if(self.resources[task].done()):
+                        del self.resources[task] # when task is finished, remove from resource pool
+                await asyncio.sleep(1) # allow other tasks to run while waiting
+            criteria = await self.queue.get() # get next task off queue, and run it
+            task = asyncio.create_task(self.start_analysis(criteria))
+            self.resources.append(task)
+        else:
+            criteria = await self.queue.get() # get next task off queue and run it
+            task = asyncio.create_task(self.start_analysis(criteria))
+            self.resources.append(task)
+
 
     async def start_analysis(self, criteria=None):
         tech_data = await self.dao.get('attack_uids')
         json_tech = json.load(open("models/attack_dict.json", "r", encoding="utf_8"))
-
         techniques = {}
         for row in tech_data:
+            await asyncio.sleep(0.01)
             # skip software
             if 'tool' in row['tid'] or 'malware' in row['tid']:
                 continue
@@ -113,7 +144,6 @@ class RestService:
         original_html = await self.web_svc.map_all_html(criteria['url'])
 
         article = dict(title=criteria['title'], html_text=html_data)
-        report_id = criteria['id']
         list_of_legacy, list_of_techs = await self.data_svc.ml_reg_split(json_tech)
 
         true_negatives = await self.ml_svc.get_true_negs()
@@ -128,6 +158,10 @@ class RestService:
         # Merge ML and Reg hits
         analyzed_html = await self.ml_svc.combine_ml_reg(ml_analyzed_html, reg_analyzed_html)
 
+        # insert card into database
+        criteria['id'] = await self.dao.insert('reports', dict(title=criteria['title'], url=criteria['url'],
+                                                                            current_status="needs_review"))
+        report_id = criteria['id']
         for sentence in analyzed_html:
             if sentence['ml_techniques_found']:
                 await self.ml_svc.ml_techniques_found(report_id, sentence)
@@ -140,6 +174,7 @@ class RestService:
         for element in original_html:
             html_element = dict(report_uid=report_id, text=element['text'], tag=element['tag'], found_status="false")
             await self.dao.insert('original_html', html_element)
+        
 
     async def missing_technique(self, criteria=None):
         attack_uid = await self.dao.get('attack_uids', dict(tid=criteria['tid']))
