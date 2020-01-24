@@ -133,7 +133,8 @@ class WebAPI:
             
         # Append techniques to enterprise layer
         if technique is not None:
-            enterprise_layer['techniques'].append(techniques)
+            for technique in techniques:
+                enterprise_layer['techniques'].append(technique)
             
         # Return the layer JSON in the response
         layer = json.dumps(enterprise_layer)
