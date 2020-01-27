@@ -121,6 +121,31 @@ function updateConfirmedContext(data){
     })
 }
 
+function downloadLayer(data){
+  // Create the name of the JSON download file from the name of the report
+  var json = JSON.parse(data) 
+  var title = json['name'] //document.getElementById("title").value;
+  var filename = title + ".json";
+  // Encode data as a uri component
+  var dataStr = "text/json;charset=utf-8," + encodeURIComponent(data);
+  // Create temporary DOM element with attribute values needed to perform the download
+  var a = document.createElement('a');
+  a.href = 'data:' + dataStr;
+  a.download = filename;
+  a.innerHTML = 'download JSON';
+  // Add the temporary element to the DOM
+  var container = document.getElementById('dropdownMenu');
+  container.appendChild(a);
+  // Download the JSON document
+  a.click();
+  // Remove the temporary element from the DOM
+  a.remove();
+}
+
+function viewLayer(data){
+  console.info("viewLayer: " + data)
+}
+
 function divSentenceReload(){
     $('#sentenceContextSection').load(document.URL +  ' #sentenceContextSection');
 }

@@ -58,7 +58,8 @@ async def init(host, port):
     app.router.add_route('GET', '/edit/{file}', website_handler.edit)
     app.router.add_route('GET', '/about', website_handler.about)
     app.router.add_route('*', '/rest', website_handler.rest_api)
-    app.router.add_route('GET', '/export/{file}', website_handler.pdf_export)
+    app.router.add_route('GET', '/export/pdf/{file}', website_handler.pdf_export)
+    app.router.add_route('GET', '/export/nav/{file}', website_handler.nav_export)
     app.router.add_static('/theme/', 'webapp/theme/')
 
     aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader('webapp/html'))
