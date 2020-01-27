@@ -114,31 +114,27 @@ class RestService:
 
 
     async def start_analysis(self, criteria=None):
-        tech_data = await self.dao.get('attack_uids')
+        tech_data = await self.dao.raw_select("SELECT * FROM attack_uids WHERE uid LIKE 'attack%';")
         json_tech = json.load(open("models/attack_dict.json", "r", encoding="utf_8"))
+
+        true_pos = await self.dao.get('true_positives')
+        false_neg = await self.dao.get('false_negatives')
+        false_pos = await self.dao.get('false_positives')
+        #print(true_pos)
         techniques = {}
         for row in tech_data:
             await asyncio.sleep(0.01)
-            # skip software
-            if 'tool' in row['tid'] or 'malware' in row['tid']:
-                continue
-            else:
-                # query for true positives
-                true_pos = await self.dao.get('true_positives', dict(uid=row['uid']))
-                tp, fp = [], []
-                for t in true_pos:
-                    tp.append(t['true_positive'])
-                # query for false negatives
-                false_neg = await self.dao.get('false_negatives', dict(uid=row['uid']))
-                for f in false_neg:
-                    tp.append(f['false_negative'])
-                # query for false positives for this technique
-                false_positives = await self.dao.get('false_positives', dict(uid=row['uid']))
-                for fps in false_positives:
-                    fp.append(fps['false_positive'])
+            # query for true positives
+            #true_pos = await self.dao.get('true_positives', dict(uid=row['uid']))
+            tp = [t['true_positive'] for t in true_pos if t['uid'] == row['uid']]
+            #await asyncio.sleep(0.01)
+            tp.extend([f['false_negative'] for f in false_neg if f['uid'] == row['uid']])
+            #await asyncio.sleep(0.01)
+            fp = [f['false_positive'] for f in false_pos if f['uid'] == row['uid']]
+            #await asyncio.sleep(0.01)
 
-                techniques[row['uid']] = {'id': row['tid'], 'name': row['name'], 'similar_words': [],
-                                          'example_uses': tp, 'false_positives': fp}
+            techniques[row['uid']] = {'id': row['tid'], 'name': row['name'], 'similar_words': [],
+                                        'example_uses': tp, 'false_positives': fp}
 
         html_data = await self.web_svc.get_url(criteria['url'])
         original_html = await self.web_svc.map_all_html(criteria['url'])
