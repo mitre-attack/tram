@@ -57,12 +57,12 @@ class WebAPI:
         :param request: The title of the report information
         :return: dictionary of report data
         """
-        report_needed = await self.dao.get('reports', dict(title=request.match_info.get('file')))
-        sentences = await self.data_svc.build_sentences(report_needed[0]['uid'])
+        report = await self.data_svc.get_report(request.match_info.get('file'))
+        sentences = await self.data_svc.build_sentences(report[0]['uid'])
         attack_uids = await self.dao.get('attack_uids')
-        original_html = await self.dao.get('original_html', dict(report_uid=report_needed[0]['uid']))
+        original_html = await self.dao.get('original_html', dict(report_uid=report[0]['uid']))
         final_html = await self.web_svc.build_final_html(original_html, sentences)
-        return dict(file=request.match_info.get('file'), title=report_needed[0]['title'], sentences=sentences, attack_uids=attack_uids, original_html=original_html, final_html=final_html)
+        return dict(file=request.match_info.get('file'), title=report[0]['title'], sentences=sentences, attack_uids=attack_uids, original_html=original_html, final_html=final_html)
 
     async def nav_export(self, request):
         """
@@ -70,12 +70,11 @@ class WebAPI:
         :param request: The title of the report information
         :return: the layer json
         """        
-        # Get the report information
-        report_needed = await self.dao.get('reports', dict(title=request.match_info.get('file')))
-        report_id = report_needed[0]['uid']
-        report_title = report_needed[0]['title']
+        # Get the report from the database
+        report = await self.data_svc.get_report(request.match_info.get('file'))
 
         # Create the layer name and description
+        report_title = report[0]['title']
         layer_name = f"{report_title}"
         enterprise_layer_description = f"Enterprise techniques used by {report_title}, ATT&CK"
         version = '1.0'
@@ -84,16 +83,13 @@ class WebAPI:
 
         # Enterprise navigator layer
         enterprise_layer = {}
-        enterprise_layer['description'] = enterprise_layer_description
         enterprise_layer['name'] = layer_name
+        enterprise_layer['description'] = enterprise_layer_description
         enterprise_layer['domain'] = "mitre-enterprise"
         enterprise_layer['version'] = "2.2"
         enterprise_layer['techniques'] = []
         enterprise_layer["gradient"] = { # white for nonused, blue for used
-		    "colors": [
-			    "#ffffff",
-    			"#66b1ff"
-	    	],
+		    "colors": ["#ffffff", "#66b1ff"],
 		    "minValue": 0,
     		"maxValue": 1
 	    }
@@ -102,39 +98,12 @@ class WebAPI:
             'color': "#66b1ff"
         }]
 
-        # Get techniques from database
-        techniques = []
-        sentences = await self.dao.get('report_sentences', dict(report_uid=report_id))
-        for sentence in sentences:
-            sentence_id = sentence['uid']
-            hits = await self.dao.get('report_sentence_hits', dict(uid=sentence_id))
-            for hit in hits:
-                # 'hits' object doesn't provide all the information we need, so we
-                # do a makeshift join here to get that information from the attack_uid
-                # list. This is ineffecient, and a way to improve this would be to perform
-                # a join on the database side
-                attack_uid = hit['attack_uid'] 
-                attack_tid = hit['attack_tid'] 
-                # query for true positive
-                true_pos = await self.dao.get('true_positives', dict(uid=attack_uid, sentence_id=sentence_id))
-                for tp in true_pos:
-                    technique = {}
-                    technique['score'] = 1
-                    technique['techniqueID'] = attack_tid
-                    technique['comment'] = tp['true_positive']
-                    techniques.append(technique)
-                # query for false negatives
-                false_neg = await self.dao.get('false_negatives', dict(uid=attack_uid, sentence_id=sentence_id))
-                for fn in false_neg:
-                    technique['score'] = 1
-                    technique['techniqueID'] = attack_tid
-                    technique['comment'] = fn['false_negative']
-                    techniques.append(technique)
-            
+        # Get confirmed techniques for the report from the database
+        techniques = await self.data_svc.get_confirmed_techniques(report[0]['uid'])
+
         # Append techniques to enterprise layer
-        if technique is not None:
-            for technique in techniques:
-                enterprise_layer['techniques'].append(technique)
+        for technique in techniques:
+            enterprise_layer['techniques'].append(technique)
             
         # Return the layer JSON in the response
         layer = json.dumps(enterprise_layer)
@@ -146,11 +115,10 @@ class WebAPI:
         :param request: The title of the report information
         :return: response status of function
         """
-        report_needed = await self.dao.get('reports', dict(title=request.match_info.get('file')))
-        sentences_id = report_needed[0]['uid']
-        sentences = await self.data_svc.build_sentences(report_needed[0]['uid'])
+        # Get the report 
+        report = await self.data_svc.get_report(request.match_info.get('file'))
+        sentences = await self.data_svc.build_sentences(report[0]['uid'])
         attack_uids = await self.dao.get('attack_uids')
-        # hits = await self.dao.get('report_sentence_hits', dict(report_uid=sentences_id))
 
         dd = dict()
         dd['content'] = []
@@ -159,8 +127,8 @@ class WebAPI:
         # Document MetaData Info
         # See https://pdfmake.github.io/docs/document-definition-object/document-medatadata/
         dd['info'] = dict()
-        dd['info']['title'] = report_needed[0]['title']
-        dd['info']['creator'] = report_needed[0]['url']
+        dd['info']['title'] = report[0]['title']
+        dd['info']['creator'] = report[0]['url']
 
         table = {"body": []}
         table["body"].append(["ID", "Name", "Identified Sentence"])

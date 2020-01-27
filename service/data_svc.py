@@ -197,6 +197,43 @@ class DataService:
         techniques = await self.dao.get('attack_uids')
         return techniques
 
+    async def get_report(self, report_title):
+        report = await self.dao.get('reports', dict(title=report_title))
+        return report
+
+    async def get_confirmed_techniques(self, report_id):
+        techniques = []
+        # Get all of the report sentences for the report
+        sentences = await self.dao.get('report_sentences', dict(report_uid=report_id))
+        for sentence in sentences:
+            # For each report sentence, get the confirmed techniques for the sentence
+            # the confirmed techniques will be determined from the true positives and false negatives
+            sentence_id = sentence['uid']
+            hits = await self.dao.get('report_sentence_hits', dict(uid=sentence_id))
+            for hit in hits:
+                # 'hits' object doesn't provide all the information we need, so we
+                # do a makeshift join here to get that information from the attack_uid
+                # list. This is ineffecient, and a way to improve this would be to perform
+                # a join on the database side
+                attack_uid = hit['attack_uid'] 
+                attack_tid = hit['attack_tid'] 
+                # query for true positive
+                true_pos = await self.dao.get('true_positives', dict(uid=attack_uid, sentence_id=sentence_id))
+                for tp in true_pos:
+                    technique = {}
+                    technique['score'] = 1
+                    technique['techniqueID'] = attack_tid
+                    technique['comment'] = tp['true_positive']
+                    techniques.append(technique)
+                # query for false negatives
+                false_neg = await self.dao.get('false_negatives', dict(uid=attack_uid, sentence_id=sentence_id))
+                for fn in false_neg:
+                    technique['score'] = 1
+                    technique['techniqueID'] = attack_tid
+                    technique['comment'] = fn['false_negative']
+                    techniques.append(technique)
+        return techniques
+
     async def ml_reg_split(self, techniques):
         list_of_legacy, list_of_techs = [], []
         for k, v in techniques.items():
