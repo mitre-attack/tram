@@ -197,10 +197,6 @@ class DataService:
         techniques = await self.dao.get('attack_uids')
         return techniques
 
-    async def get_report(self, report_title):
-        report = await self.dao.get('reports', dict(title=report_title))
-        return report
-
     async def get_confirmed_techniques(self, report_id):
         techniques = []
         # Get all of the report sentences for the report

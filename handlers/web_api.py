@@ -57,7 +57,7 @@ class WebAPI:
         :param request: The title of the report information
         :return: dictionary of report data
         """
-        report = await self.data_svc.get_report(request.match_info.get('file'))
+        report = await self.dao.get('reports', dict(title=request.match_info.get('file')))
         sentences = await self.data_svc.build_sentences(report[0]['uid'])
         attack_uids = await self.dao.get('attack_uids')
         original_html = await self.dao.get('original_html', dict(report_uid=report[0]['uid']))
@@ -71,7 +71,7 @@ class WebAPI:
         :return: the layer json
         """        
         # Get the report from the database
-        report = await self.data_svc.get_report(request.match_info.get('file'))
+        report = await self.dao.get('reports', dict(title=request.match_info.get('file')))
 
         # Create the layer name and description
         report_title = report[0]['title']
@@ -115,8 +115,8 @@ class WebAPI:
         :param request: The title of the report information
         :return: response status of function
         """
-        # Get the report 
-        report = await self.data_svc.get_report(request.match_info.get('file'))
+        # Get the report
+        report = await self.dao.get('reports', dict(title=request.match_info.get('file')))
         sentences = await self.data_svc.build_sentences(report[0]['uid'])
         attack_uids = await self.dao.get('attack_uids')
 
