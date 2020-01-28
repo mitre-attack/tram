@@ -101,8 +101,8 @@ class RestService:
                 del self.resources[task] # delete finished tasks
 
         max_tasks = 1
-        while(self.queue.qsize() > 0):
-            await asyncio.sleep(0.01)
+        while(self.queue.qsize() > 0): # while there are still tasks to do....
+            await asyncio.sleep(0.01) # check resources and execute tasks
             if(len(self.resources) >= max_tasks): # if the resource pool is maxed out...
                 while(len(self.resources) >= max_tasks): # check resource pool until a task is finished
                     for task in range(len(self.resources)):
