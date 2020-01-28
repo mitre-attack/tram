@@ -80,8 +80,11 @@ class RestService:
     async def insert_report(self, criteria=None):
         #criteria['id'] = await self.dao.insert('reports', dict(title=criteria['title'], url=criteria['url'],
         #                                                       current_status="needs_review"))
-        criteria = dict(title=criteria['title'], url=criteria['url'],current_status="needs_review")
-        await self.queue.put(criteria)
+        for i in range(len(criteria['title'])):
+            temp_dict = dict(title=criteria['title'][i], url=criteria['url'][i],current_status="needs_review")
+            await self.queue.put(temp_dict)
+        #criteria = dict(title=criteria['title'], url=criteria['url'],current_status="needs_review")
+        #await self.queue.put(criteria)
         asyncio.create_task(self.check_queue()) # check queue background task
         await asyncio.sleep(0.01)
     
@@ -98,19 +101,21 @@ class RestService:
                 del self.resources[task] # delete finished tasks
 
         max_tasks = 1
-        if(len(self.resources) >= max_tasks): # if the resource pool is maxed out...
-            while(len(self.resources) >= max_tasks): # check resource pool until a task is finished
-                for task in range(len(self.resources)):
-                    if(self.resources[task].done()):
-                        del self.resources[task] # when task is finished, remove from resource pool
-                await asyncio.sleep(1) # allow other tasks to run while waiting
-            criteria = await self.queue.get() # get next task off queue, and run it
-            task = asyncio.create_task(self.start_analysis(criteria))
-            self.resources.append(task)
-        else:
-            criteria = await self.queue.get() # get next task off queue and run it
-            task = asyncio.create_task(self.start_analysis(criteria))
-            self.resources.append(task)
+        while(self.queue.qsize() > 0):
+            await asyncio.sleep(0.01)
+            if(len(self.resources) >= max_tasks): # if the resource pool is maxed out...
+                while(len(self.resources) >= max_tasks): # check resource pool until a task is finished
+                    for task in range(len(self.resources)):
+                        if(self.resources[task].done()):
+                            del self.resources[task] # when task is finished, remove from resource pool
+                    await asyncio.sleep(1) # allow other tasks to run while waiting
+                criteria = await self.queue.get() # get next task off queue, and run it
+                task = asyncio.create_task(self.start_analysis(criteria))
+                self.resources.append(task)
+            else:
+                criteria = await self.queue.get() # get next task off queue and run it
+                task = asyncio.create_task(self.start_analysis(criteria))
+                self.resources.append(task)
 
 
     async def start_analysis(self, criteria=None):
