@@ -10,14 +10,20 @@ import asyncio
 
 
 class WebService:
-
-    async def map_all_html(self, url_input):
-        a = newspaper.Article(url_input, keep_article_html=True)
+    async def get_news_obj(self,url):
+        a = newspaper.Article(url,keep_article_html=True)
         a.download()
+        await asyncio.sleep(0.01)
         a.parse()
+        return a
+
+    async def map_all_html(self, a):
+        #a = newspaper.Article(url_data, keep_article_html=True)
+        #a.download() # URL is downloaded twice uneccesarily
+        #a.parse()
         results, plaintext, htmltext, images, seen_images = [], [], [], [], []
         images = await self._collect_all_images(a.images)
-        plaintext = await self._extract_text_as_list(a.text)
+        plaintext = await self._extract_text_as_list(newspaper.fulltext(a.html))
         htmltext = await self._extract_html_as_list(a.article_html)
 
         # Loop through pt one by one, matching its line with a forward-advancing pointer on the html
@@ -94,7 +100,7 @@ class WebService:
         return sentences
 
     @staticmethod
-    async def tokenize(s):
+    async def tokenize(s): # can be replaced by spacy implementation thats much faster
         """Function to remove stopwords from a sentence and return a list of words to match"""
         word_list = re.findall(r'\w+', s.lower())
         filtered_words = [word for word in word_list if word not in stopwords.words('english')]
@@ -125,13 +131,14 @@ class WebService:
         return out
 
     @staticmethod
-    async def get_url(url, returned_format=None):
+    async def get_url(url_data, returned_format=None):
         if returned_format == 'html':
             print('[!] HTML support is being refactored. Currently data is being returned plaintext')
-        r = requests.get(url)
-        await asyncio.sleep(0.01)
+        #r = requests.get(url)
+        #await asyncio.sleep(0.01)
 
-        b = newspaper.fulltext(r.text)
+        # b = newspaper.fulltext(r.text)
+        b = newspaper.fulltext(url_data.html)
         return str(b).replace('\n', '<br>') if b else None
 
     @staticmethod

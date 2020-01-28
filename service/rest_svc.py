@@ -136,8 +136,9 @@ class RestService:
             techniques[row['uid']] = {'id': row['tid'], 'name': row['name'], 'similar_words': [],
                                         'example_uses': tp, 'false_positives': fp}
 
-        html_data = await self.web_svc.get_url(criteria['url'])
-        original_html = await self.web_svc.map_all_html(criteria['url'])
+        a = await self.web_svc.get_news_obj(criteria['url']) # download article and save article object (newspaper uses requests in background)
+        html_data = await self.web_svc.get_url(a) # parse plaintext data
+        original_html = await self.web_svc.map_all_html(a) # get original html data
 
         article = dict(title=criteria['title'], html_text=html_data)
         list_of_legacy, list_of_techs = await self.data_svc.ml_reg_split(json_tech)
