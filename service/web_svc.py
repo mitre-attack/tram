@@ -24,7 +24,7 @@ class WebService:
         results, plaintext, htmltext, images, seen_images = [], [], [], [], []
         images = await self._collect_all_images(a.images)
         plaintext = await self._extract_text_as_list(newspaper.fulltext(a.html))
-        htmltext = await self._extract_html_as_list(a.article_html)
+        htmltext = await self._extract_html_as_list(a.html)
 
         # Loop through pt one by one, matching its line with a forward-advancing pointer on the html
         counter = 0
@@ -35,7 +35,7 @@ class WebService:
             text_match_found = False
             image_found = False
             for forward_advancer in range(counter, len(htmltext)):
-                if 'src=' in htmltext[forward_advancer] and htmltext[forward_advancer] not in seen_images and image_found is False:
+                if '<img' in htmltext[forward_advancer] and htmltext[forward_advancer] not in seen_images and image_found is False:
                     # Found an image, put it in data but don't advance incase there's text.
                     soup = BeautifulSoup(htmltext[forward_advancer], 'html.parser')
                     source = soup.img['src']
@@ -69,7 +69,7 @@ class WebService:
             html_sentences = element['text'].split('. ')
             html_sentences = await self._restore_periods_on_sentences(html_sentences)
             for single_sentence in html_sentences:
-                ss_found = False
+                #ss_found = False
                 words = single_sentence.split(' ')
                 hint = words[0] + ' ' + words[1] + ' ' + words[2] if len(words) > 2 else words[0]
                 for sentence in sentences:
@@ -181,7 +181,7 @@ class WebService:
     @staticmethod
     async def _extract_html_as_list(html_doc):
         htmltext = []
-        for html_line in html_doc.split('\n'):
+        for html_line in html_doc.split('\n'): # redundant???
             htmltext.append(html_line)
         return htmltext
 
