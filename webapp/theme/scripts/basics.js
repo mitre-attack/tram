@@ -56,7 +56,7 @@ function submit_report(){
     var url = document.getElementById("url").value.split(",");
     var title = document.getElementById("title").value.split(",");
     if(title.length != url.length){
-      alert("Number of urls and titles do not match, please insert same number of comma seperated iterms.");
+      alert("Number of urls and titles do not match, please insert same number of comma seperated items.");
     }else{
       restRequest('POST', {'index':'insert_report', 'url':url, 'title':title}, show_info);
     }    
