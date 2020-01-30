@@ -198,36 +198,29 @@ class DataService:
         return techniques
 
     async def get_confirmed_techniques(self, report_id):
+        # The SQL select join query to retrieve the confirmed techniques for the report from the database
+        select_join_query = (
+            f"SELECT report_sentences.uid, report_sentence_hits.attack_uid, report_sentence_hits.report_uid, report_sentence_hits.attack_tid, true_positives.true_positive " 
+            f"FROM ((report_sentences INNER JOIN report_sentence_hits ON report_sentences.uid = report_sentence_hits.uid) " 
+            f"INNER JOIN true_positives ON report_sentence_hits.uid = true_positives.sentence_id AND report_sentence_hits.attack_uid = true_positives.uid) " 
+            f"WHERE report_sentence_hits.report_uid = {report_id} "
+            f"UNION "
+            f"SELECT report_sentences.uid, report_sentence_hits.attack_uid, report_sentence_hits.report_uid, report_sentence_hits.attack_tid, false_negatives.false_negative " 
+            f"FROM ((report_sentences INNER JOIN report_sentence_hits ON report_sentences.uid = report_sentence_hits.uid) " 
+            f"INNER JOIN false_negatives ON report_sentence_hits.uid = false_negatives.sentence_id AND report_sentence_hits.attack_uid = false_negatives.uid) " 
+            f"WHERE report_sentence_hits.report_uid = {report_id}")
+        # Run the SQL select join query
+        hits = await self.dao.raw_select(select_join_query)
         techniques = []
-        # Get all of the report sentences for the report
-        sentences = await self.dao.get('report_sentences', dict(report_uid=report_id))
-        for sentence in sentences:
-            # For each report sentence, get the confirmed techniques for the sentence
-            # the confirmed techniques will be determined from the true positives and false negatives
-            sentence_id = sentence['uid']
-            hits = await self.dao.get('report_sentence_hits', dict(uid=sentence_id))
-            for hit in hits:
-                # 'hits' object doesn't provide all the information we need, so we
-                # do a makeshift join here to get that information from the attack_uid
-                # list. This is ineffecient, and a way to improve this would be to perform
-                # a join on the database side
-                attack_uid = hit['attack_uid'] 
-                attack_tid = hit['attack_tid'] 
-                # query for true positive
-                true_pos = await self.dao.get('true_positives', dict(uid=attack_uid, sentence_id=sentence_id))
-                for tp in true_pos:
-                    technique = {}
-                    technique['score'] = 1
-                    technique['techniqueID'] = attack_tid
-                    technique['comment'] = tp['true_positive']
-                    techniques.append(technique)
-                # query for false negatives
-                false_neg = await self.dao.get('false_negatives', dict(uid=attack_uid, sentence_id=sentence_id))
-                for fn in false_neg:
-                    technique['score'] = 1
-                    technique['techniqueID'] = attack_tid
-                    technique['comment'] = fn['false_negative']
-                    techniques.append(technique)
+        for hit in hits:
+            # For each confirmed technique returned,
+            # create a technique object and add it to the list of techniques.
+            technique = {}
+            technique['score'] = 1
+            technique['techniqueID'] = hit['attack_tid'] 
+            technique['comment'] = hit['true_positive']
+            techniques.append(technique)
+        # Return the list of confirmed techniques
         return techniques
 
     async def ml_reg_split(self, techniques):
