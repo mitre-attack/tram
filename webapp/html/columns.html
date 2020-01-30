@@ -33,7 +33,16 @@
 
 <div class="row justify-content-center pb-3">
     <div class="col-md-auto">
-        <button onclick="$.getJSON('/export/{{file}}', (x) => {pdfMake.createPdf(x).download(x['info']['title']);})" class="btn btn-md btn-outline-secondary">Export PDF</button>
+        <button onclick="$.getJSON('/export/pdf/{{file}}', (x) => {pdfMake.createPdf(x).download(x['info']['title']);})" class="btn btn-md btn-outline-secondary">Export PDF</button>
+    </div>
+    <div class="col-md-auto">
+        <button class="btn btn-md btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Export Navigator JSON</button>
+        <div class="dropdown-menu" id="dropdownMenu" aria-labelledby="dropdownMenuButton">
+            <h6 class="dropdown-header">Enterprise Layer</h6>
+            <a class="dropdown-item" onclick="$.getJSON('/export/nav/{{file}}', (x) => {downloadLayer(x);})">download</a>
+<!--            <a class="dropdown-item" onclick="$.getJSON('/export/nav/{{file}}', (x) => {viewLayer(x);})">view</a>-->
+        </div>
+    </div>
     </div>
 </div>
 

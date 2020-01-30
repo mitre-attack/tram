@@ -4,6 +4,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 import os, pickle, random
 import logging
+import asyncio
 
 
 class MLService:
@@ -66,6 +67,7 @@ class MLService:
 
         df2 = pd.DataFrame({'text': cleaned_sentences})
         Xnew = cv.transform(df2['text']).toarray()
+        await asyncio.sleep(0.01)
         y_pred = logreg.predict(Xnew)
         df2['category'] = y_pred.tolist()
         return df2
@@ -94,6 +96,7 @@ class MLService:
             final_df = await self.analyze_document(cv, logreg, list_of_sentences)
             count = 0
             for vals in final_df['category']:
+                await asyncio.sleep(0.001)
                 if vals == True:
                     list_of_sentences[count]['ml_techniques_found'].append(i)
                 count += 1
