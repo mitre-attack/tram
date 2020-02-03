@@ -50,13 +50,18 @@
     <div class="col reportSentencesDiv">
         {% for elmt in final_html %}
             {% if elmt.tag == 'img' %}
-                <img src="{{elmt.text}}" class="normalImage" onclick="sentenceContext({{elmt.uid}}, 'img')">
+                <img src="{{elmt.text}}" class="normalImage" onclick="sentenceContext({{elmt.uid}}, 'img')"> <br><br>
+            {% elif elmt.tag == 'header' %}
+                <h3>{{elmt.text}}</h3> 
+            {% elif elmt.tag == 'li' and elmt.found_status == 'true' %}
+                <li><a class="bg-warning" id="elmt{{elmt.uid}}" onclick="sentenceContext({{elmt.uid}}, 'p')">{{elmt.text}}</a></li> <br>
+            {% elif elmt.tag == 'li' %}
+                <li><a id="elmt{{elmt.uid}}" onclick="sentenceContext({{elmt.uid}}, 'p')">{{elmt.text}}</a></li> <br>
             {% elif elmt.found_status == 'true' %}
-                <a class="bg-warning" id="elmt{{elmt.uid}}" onclick="sentenceContext({{elmt.uid}}, 'p')">{{elmt.text}}</a>
+                <a class="bg-warning" id="elmt{{elmt.uid}}" onclick="sentenceContext({{elmt.uid}}, 'p')">{{elmt.text}}</a> <br><br>
             {% else %}
-                <a id="elmt{{elmt.uid}}" onclick="sentenceContext({{elmt.uid}}, 'p')">{{elmt.text}}</a>
+                <a id="elmt{{elmt.uid}}" onclick="sentenceContext({{elmt.uid}}, 'p')">{{elmt.text}}</a> <br><br>
             {% endif %}
-        <br><br>
         {% endfor %}
     </div>
     <div class="col col-sm-4 ">
