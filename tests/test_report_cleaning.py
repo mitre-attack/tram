@@ -49,12 +49,17 @@ async def test_html_list_creator():
     assert html_list == validation_text
 
 @pytest.mark.asyncio
-async def test_build_image_dict():
-    pass
+async def test_build_dicts():
+    e = {'uid':1,'text':'this is text','tag':'img','found_status':True}
+    verify = {'uid': 1, 'text': 'this is text', 'tag': 'img', 'found_status': True, 'hits': None, 'confirmed': 'false'}
+    test_out = await web_svc._build_final_image_dict(e)
+    assert verify == test_out
 
-@pytest.mark.asyncio
-async def test_build_html_text():
-    pass
+    sent = {'uid':2,'found_status':True,'hits':'here','confirmed':True}
+    verify2 = {'uid': 2, 'text': 'this is a single sentance', 'tag': 'p', 'found_status': True, 'hits': 'here', 'confirmed': True}
+    test_out = await web_svc._build_final_html_text(sent,"this is a single sentance")
+    assert verify2 == test_out
+
 
 @pytest.mark.asyncio
 async def test_html_mapping():
