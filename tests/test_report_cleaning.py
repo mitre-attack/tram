@@ -63,4 +63,4 @@ async def test_build_dicts():
 
 @pytest.mark.asyncio
 async def test_html_mapping():
-    test_html = web_svc.map_all_html(website_to_test[0])
+    test_html = web_svc.map_all_html(website_to_test[0]) 
