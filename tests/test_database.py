@@ -9,7 +9,7 @@ dao = Dao(os.path.join('database', 'tram.db'))
 @pytest.mark.asyncio
 async def test_build_db():
     with open("conf/schema.sql") as schema:
-        await dao.build((schema.read()))
+        await dao.build((schema.read())) 
     assert os.path.isfile("database/tram.db") == True
 
 @pytest.mark.asyncio
@@ -39,6 +39,10 @@ async def test_delete():
     await dao.delete('reports',dict(uid=1))
     pull = await dao.get('reports',test_crit)
     assert pull == []
+
+@pytest.mark.asyncio
+async def test_complex_query():
+    pass
 
 
 @pytest.mark.asyncio
