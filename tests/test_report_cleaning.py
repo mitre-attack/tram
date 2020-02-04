@@ -1,5 +1,6 @@
 import pytest
 import os
+import requests
 
 from handlers.web_api import WebAPI
 from service.data_svc import DataService
@@ -29,3 +30,32 @@ async def test_remove_html_and_markup():
     test_data = '<html>This is an html page<p>Here is a paragraph</p><img src="and an image">Image title</img><m>and some random tags</m></html>'
     verification_data = 'This is an html pageHere is a paragraphImage titleand some random tags'
     assert await web_svc.remove_html_markup_and_found(test_data) == verification_data
+
+@pytest.mark.asyncio
+async def test_text_list_creator():
+    #test_url = "http://x.com" # "https://www.webscraper.io/test-sites/e-commerce/allinone"
+    text = "this is text\nthisismoretext\n\neven more text"
+    validation_text = ["this is text","thisismoretext","even more text"]
+    #r = requests.get(test_url)
+    text_list = await web_svc._extract_text_as_list(text)
+    assert text_list == validation_text
+
+@pytest.mark.asyncio
+async def test_html_list_creator():
+    text = "<html>\n<p>This is a paragraph</p>\n<div>\n<p>this is a paragraph in a div</p>\n</div>\n</html>"
+    validation_text = ['<html>', '<p>This is a paragraph</p>', '<div>', '<p>this is a paragraph in a div</p>', '</div>', '</html>']
+
+    html_list = await web_svc._extract_html_as_list(text)
+    assert html_list == validation_text
+
+@pytest.mark.asyncio
+async def test_build_image_dict():
+    pass
+
+@pytest.mark.asyncio
+async def test_build_html_text():
+    pass
+
+@pytest.mark.asyncio
+async def test_html_mapping():
+    test_html = web_svc.map_all_html(website_to_test[0])
