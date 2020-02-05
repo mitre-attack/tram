@@ -66,7 +66,16 @@ async def test_bg_tasks_online():
 @pytest.mark.asyncio
 async def test_build_model():
     json_tech = json.load(open("models/attack_dict.json", "r", encoding="utf_8"))
-    list_of_techs = ['Indicator Removal from Tools', 'Windows Management Instrumentation', 'Screen Capture', 'System Owner/User Discovery', 'Credential Dumping', 'Audio Capture', 'Timestomp', 'Permission Groups Discovery', 'Email Collection', 'Data from Removable Media', 'Code Signing', 'Process Hollowing', 'Spearphishing Link', 'Security Software Discovery', 'Disabling Security Tools', 'Automated Collection', 'Clipboard Data', 'System Service Discovery', 'Network Share Discovery', 'Peripheral Device Discovery', 'System Information Discovery', 'Standard Application Layer Protocol', 'Scheduled Task', 'Execution through API', 'Custom Cryptographic Protocol', 'Replication Through Removable Media', 'Data from Local System', 'Deobfuscate/Decode Files or Information', 'Masquerading', 'Process Injection', 'DLL Search Order Hijacking', 'New Service', 'Application Window Discovery', 'Standard Cryptographic Protocol', 'Binary Padding', 'Remote Desktop Protocol', 'File Deletion', 'Modify Registry', 'Rundll32', 'Regsvr32', 'Spearphishing Attachment', 'Video Capture', 'Software Packing', 'System Network Configuration Discovery', 'Account Discovery', 'Connection Proxy', 'Command-Line Interface', 'Indicator Removal on Host', 'File and Directory Discovery', 'Data Staged', 'System Network Connections Discovery', 'Scripting', 'Web Service', 'User Execution', 'Process Discovery', 'Exfiltration Over Command and Control Channel', 'Registry Run Keys / Startup Folder', 'Shortcut Modification', 'Exfiltration Over Alternative Protocol', 'Data Obfuscation', 'Valid Accounts', 'DLL Side-Loading', 'Exploitation for Privilege Escalation', 'Obfuscated Files or Information', 'Data Compressed', 'Credentials in Files', 'Input Capture', 'Exploitation for Client Execution', 'Standard Non-Application Layer Protocol', 'Query Registry', 'Uncommonly Used Port', 'Bypass User Account Control', 'Data Encoding', 'Data Encrypted', 'Drive-by Compromise', 'Access Token Manipulation', 'Create Account', 'Remote System Discovery', 'Network Service Scanning', 'Remote File Copy', 'Fallback Channels', 'System Time Discovery', 'Service Execution', 'PowerShell', 'Custom Command and Control Protocol', 'Commonly Used Port', 'Windows Admin Shares']
+    list_of_techs = ['Indicator Removal from Tools', 'Windows Management Instrumentation', 'Screen Capture', 'System Owner/User Discovery', 'Credential Dumping', 'Audio Capture', 'Timestomp', 'Permission Groups Discovery',
+     'Email Collection', 'Data from Removable Media', 'Code Signing', 'Process Hollowing', 'Spearphishing Link', 'Security Software Discovery', 'Disabling Security Tools', 'Automated Collection', 'Clipboard Data', 'System Service Discovery',
+      'Network Share Discovery', 'Peripheral Device Discovery', 'System Information Discovery', 'Standard Application Layer Protocol', 'Scheduled Task', 'Execution through API', 'Custom Cryptographic Protocol', 
+      'Replication Through Removable Media', 'Data from Local System', 'Deobfuscate/Decode Files or Information', 'Masquerading', 'Process Injection', 'DLL Search Order Hijacking', 'New Service', 'Application Window Discovery', 
+      'Standard Cryptographic Protocol', 'Binary Padding', 'Remote Desktop Protocol', 'File Deletion', 'Modify Registry', 'Rundll32', 'Regsvr32', 'Spearphishing Attachment', 'Video Capture', 'Software Packing', 
+      'System Network Configuration Discovery', 'Account Discovery', 'Connection Proxy', 'Command-Line Interface', 'Indicator Removal on Host', 'File and Directory Discovery', 'Data Staged', 'System Network Connections Discovery', 
+      'Scripting', 'Web Service', 'User Execution', 'Process Discovery', 'Exfiltration Over Command and Control Channel', 'Registry Run Keys / Startup Folder', 'Shortcut Modification', 'Exfiltration Over Alternative Protocol', 
+      'Data Obfuscation', 'Valid Accounts', 'DLL Side-Loading', 'Exploitation for Privilege Escalation', 'Obfuscated Files or Information', 'Data Compressed', 'Credentials in Files', 'Input Capture', 'Exploitation for Client Execution', 
+      'Standard Non-Application Layer Protocol', 'Query Registry', 'Uncommonly Used Port', 'Bypass User Account Control', 'Data Encoding', 'Data Encrypted', 'Drive-by Compromise', 'Access Token Manipulation', 'Create Account', 
+      'Remote System Discovery', 'Network Service Scanning', 'Remote File Copy', 'Fallback Channels', 'System Time Discovery', 'Service Execution', 'PowerShell', 'Custom Command and Control Protocol', 'Commonly Used Port', 'Windows Admin Shares']
     true_negs = ["This is a generic sentance","There aren't any relations to techniques in this senatnce","Random gibberish that blah blah blah!","Four score and seven years ago..."]
     #for tech in list_of_techs:
     i = random.randint(0,len(list_of_techs)-1) # randomize the selection for building
@@ -80,8 +89,25 @@ async def test_build_model():
 async def test_ml_performance():
     if os.path.isfile('models/model_dict.p'):
         model_dict = pickle.load(open('models/model_dict.p', 'rb'))
-
+        list_of_techs = ['Indicator Removal from Tools', 'Windows Management Instrumentation', 'Screen Capture', 'System Owner/User Discovery', 'Credential Dumping', 'Audio Capture', 'Timestomp', 'Permission Groups Discovery',
+        'Email Collection', 'Data from Removable Media', 'Code Signing', 'Process Hollowing', 'Spearphishing Link', 'Security Software Discovery', 'Disabling Security Tools', 'Automated Collection', 'Clipboard Data', 'System Service Discovery',
+        'Network Share Discovery', 'Peripheral Device Discovery', 'System Information Discovery', 'Standard Application Layer Protocol', 'Scheduled Task', 'Execution through API', 'Custom Cryptographic Protocol', 
+        'Replication Through Removable Media', 'Data from Local System', 'Deobfuscate/Decode Files or Information', 'Masquerading', 'Process Injection', 'DLL Search Order Hijacking', 'New Service', 'Application Window Discovery', 
+        'Standard Cryptographic Protocol', 'Binary Padding', 'Remote Desktop Protocol', 'File Deletion', 'Modify Registry', 'Rundll32', 'Regsvr32', 'Spearphishing Attachment', 'Video Capture', 'Software Packing', 
+        'System Network Configuration Discovery', 'Account Discovery', 'Connection Proxy', 'Command-Line Interface', 'Indicator Removal on Host', 'File and Directory Discovery', 'Data Staged', 'System Network Connections Discovery', 
+        'Scripting', 'Web Service', 'User Execution', 'Process Discovery', 'Exfiltration Over Command and Control Channel', 'Registry Run Keys / Startup Folder', 'Shortcut Modification', 'Exfiltration Over Alternative Protocol', 
+        'Data Obfuscation', 'Valid Accounts', 'DLL Side-Loading', 'Exploitation for Privilege Escalation', 'Obfuscated Files or Information', 'Data Compressed', 'Credentials in Files', 'Input Capture', 'Exploitation for Client Execution', 
+        'Standard Non-Application Layer Protocol', 'Query Registry', 'Uncommonly Used Port', 'Bypass User Account Control', 'Data Encoding', 'Data Encrypted', 'Drive-by Compromise', 'Access Token Manipulation', 'Create Account', 
+        'Remote System Discovery', 'Network Service Scanning', 'Remote File Copy', 'Fallback Channels', 'System Time Discovery', 'Service Execution', 'PowerShell', 'Custom Command and Control Protocol', 'Commonly Used Port', 'Windows Admin Shares']        
+        X_test = []
+        y_test = []
+        for i in list_of_techs:
+            cv,logreg = model_dict[i]
+            # score = logreg.score(X_test,y_test)
+            # result_score = original_score_value_from_file
+            # assert score >= result_score
     pass # load model from store, test models performance
+    # assert score 
 
 @pytest.mark.asyncio
 async def test_delete_db(): # cleanup tests
