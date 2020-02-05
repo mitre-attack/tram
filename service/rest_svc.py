@@ -177,8 +177,30 @@ class RestService:
         
 
     async def missing_technique(self, criteria=None):
-        attack_uid = await self.dao.get('attack_uids', dict(tid=criteria['tid']))
-        criteria['attack_uid'] = attack_uid[0]['uid']
-        await self.true_positive(criteria)
-        return attack_uid[0]['uid']
+        # Get the attack information for this attack id
+        attack_dict = await self.dao.get('attack_uids', dict(uid=criteria['attack_uid']))
+
+        # Get the report sentence information for the sentence id
+        sentence_dict = await self.dao.get('report_sentences', dict(uid=criteria['sentence_id']))
+        
+        # Get the sentence to insert by removing html markup
+        sentence_to_insert = await self.web_svc.remove_html_markup_and_found(sentence_dict[0]['text'])
+        
+        # Insert new row in the true_positives database table to indicate a new confirmed technique
+        await self.dao.insert('true_positives', dict(sentence_id=sentence_dict[0]['uid'], uid=criteria['attack_uid'],
+                                                    true_positive=sentence_to_insert, element_tag=criteria['element_tag']))
+        
+        # Insert new row in the report_sentence_hits database table to indicate a new confirmed technique
+        # This is needed to ensure that requests to get all confirmed techniques works correctly
+        await self.dao.insert('report_sentence_hits', dict(uid=criteria['sentence_id'], attack_uid=criteria['attack_uid'],
+                                                    attack_technique_name=attack_dict[0]['name'], report_uid=sentence_dict[0]['report_uid'], 
+                                                    attack_tid=attack_dict[0]['tid']))
+        
+        # If the found_status for the sentence id is set to false when adding a missing technique
+        # then update the found_status value to true for the sentence id in the report_sentence table 
+        if sentence_dict[0]['found_status']=='false':
+            await self.dao.update('report_sentences', 'uid', criteria['sentence_id'], dict(found_status='true'))
+        
+        # Return status message
+        return dict(status='inserted')
 
