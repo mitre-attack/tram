@@ -8,6 +8,7 @@ import json
 import random
 import pickle
 import pandas as pd
+import numpy as np
 
 import aiohttp_jinja2
 import jinja2
@@ -164,7 +165,7 @@ async def test_ml_performance():
         'Service Execution':1.0,'PowerShell':1.0,'Custom Command and Control Protocol':1.0,'Commonly User Port':1.0,'Windows Admin Shares':1.0}
         for i in list_of_techs:
             X_test,y_test = await prep_test_data(i,json_tech,true_negs)
-            cv,logreg = model_dict[i]
+            _,logreg = model_dict[i]
             score_check = orig_score[i]
             score = logreg.score(X_test,y_test)
             assert score >= score_check[i]
