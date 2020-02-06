@@ -204,5 +204,11 @@ class WebService:
     @staticmethod
     async def _restore_periods_on_sentences(sentence_list):
         sen_len = len(sentence_list)
-        return sentence_list if sen_len == 1 else [sentence_list[i] + "." for i in range(sen_len-1)]
+        if sen_len == 1: 
+            return sentence_list
+        else: 
+            last = sentence_list[-1]
+            sentence_list = [sentence_list[i] + "." for i in range(sen_len-1)]
+            sentence_list.append(last)
+            return sentence_list
 
