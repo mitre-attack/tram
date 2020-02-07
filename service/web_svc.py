@@ -38,9 +38,16 @@ class WebService:
                     results.append(img_dict)
                     seen_images.append(source)
                     image_found = True
+        
                 if first_word in htmltext[forward_advancer]:
                     # Found the matching word, put the text into the data.
-                    res_dict = await self._construct_text_dict(pt)
+                    res_dict = dict()
+                    if '<h' in htmltext[forward_advancer]:
+                        res_dict = await self._construct_text_dict(pt, 'header')
+                    elif '<li' in htmltext[forward_advancer]:
+                        res_dict = await self._construct_text_dict(pt, 'li')
+                    else: 
+                        res_dict = await self._construct_text_dict(pt, 'p')
                     results.append(res_dict)
                     counter = forward_advancer + 1
                     text_match_found = True
@@ -54,7 +61,7 @@ class WebService:
     async def build_final_html(self, original_html, sentences):
         final_html = []
         for element in original_html:
-            if element['tag'] == 'img':
+            if element['tag'] == 'img' or element['tag'] == 'header':
                 final_element = await self._build_final_image_dict(element)
                 final_html.append(final_element)
                 continue
@@ -69,7 +76,7 @@ class WebService:
                 for sentence in sentences:
                     if hint in sentence['text']:
                         ss_found = True
-                        final_element = await self._build_final_html_text(sentence, single_sentence)
+                        final_element = await self._build_final_html_text(sentence, single_sentence, element['tag'])
                         final_html.append(final_element)
                         break
         return final_html
@@ -145,12 +152,13 @@ class WebService:
         final_element['confirmed'] = 'false'
         return final_element
 
+
     @staticmethod
-    async def _build_final_html_text(sentence, single_sentence):
+    async def _build_final_html_text(sentence, single_sentence, tag):
         final_element = dict()
         final_element['uid'] = sentence['uid']
         final_element['text'] = single_sentence
-        final_element['tag'] = 'p'
+        final_element['tag'] = tag
         final_element['found_status'] = sentence['found_status']
         final_element['hits'] = sentence['hits']
         final_element['confirmed'] = sentence['confirmed']
@@ -192,10 +200,10 @@ class WebService:
         return img_dict
 
     @staticmethod
-    async def _construct_text_dict(plaintext):
+    async def _construct_text_dict(plaintext, tag):
         res_dict = dict()
         res_dict['text'] = plaintext
-        res_dict['tag'] = 'p'
+        res_dict['tag'] = tag
         res_dict['found_status'] = False
         res_dict['ml_techniques_found'] = []
         res_dict['res_techniques_found'] = []
