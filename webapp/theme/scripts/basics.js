@@ -53,9 +53,13 @@ function set_status(set_status, file_name){
 }
 
 function submit_report(){
-    var url = document.getElementById("url").value;
-    var title = document.getElementById("title").value;
-    restRequest('POST', {'index':'insert_report', 'url':url, 'title':title}, show_info);
+    var url = document.getElementById("url").value.split(",");
+    var title = document.getElementById("title").value.split(",");
+    if(title.length != url.length){
+      alert("Number of urls and titles do not match, please insert same number of comma seperated items.");
+    }else{
+      restRequest('POST', {'index':'insert_report', 'url':url, 'title':title}, show_info);
+    }    
 }
 
 function show_dropdown() {
