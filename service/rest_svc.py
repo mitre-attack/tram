@@ -1,5 +1,7 @@
 import json
 import asyncio
+from io import StringIO
+import pandas as pd
 
 class RestService:
 
@@ -86,6 +88,15 @@ class RestService:
         # criteria = dict(title=criteria['title'], url=criteria['url'],current_status="needs_review")
         # await self.queue.put(criteria)
         asyncio.create_task(self.check_queue()) # check queue background task
+        await asyncio.sleep(0.01)
+
+    async def insert_csv(self,criteria=None):
+        file = StringIO(criteria['file'])
+        df = pd.read_csv(file)
+        for row in range(df.shape[0]):
+            temp_dict = dict(title=df['title'][row],url=df['url'][row],current_status="needs_review")
+            await self.queue.put(temp_dict)
+        asyncio.create_task(self.check_queue())
         await asyncio.sleep(0.01)
 
     async def check_queue(self):
