@@ -38,6 +38,23 @@
                         </div>
                       </form>
                     </div>
+                    <div class="card bg-light">
+                        <div id="queue" class="card-body">
+                            <h6 class="card-title text-uppercase text-truncate py-2">In queue</h6>
+                            <div class="items border border-light">
+                                {% for report in queue %}
+                                <div class="card draggable shadow-sm" id="queue-{{report.uid}}" draggable="true" ondragstart="drag(event)">
+                                <div class="card-body">
+                                    <a onclick="deleteReport({{report.uid}})"
+                                       class="glyphicon glyphicon-trash btn-sm btn-outline-danger float-right"></a>
+                                    <p>
+                                    <p class="card-text">{{report.title}}</p>
+                                </div>
+                                </div>
+                                {% endfor %}
+                                <div id="testing" class="dropzone rounded" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="clearDrop(event)"> &nbsp </div>
+                            </div>
+                        </div>
                 </div>
           </div>
         </nav>
