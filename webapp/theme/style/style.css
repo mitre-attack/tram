@@ -6,7 +6,8 @@ html
 }
 
 body {
-  height: 100%;
+  min-height: 400px;
+  margin-bottom: 100px;
   color:#000000;
   font-family: 'Roboto-Regular', sans-serif;
 }
