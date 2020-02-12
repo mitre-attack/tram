@@ -5,6 +5,7 @@ from sklearn.linear_model import LogisticRegression
 import spacy as sp
 import redis
 import pickle
+import logging
 
 
 '''
@@ -22,6 +23,7 @@ class RetrainingService:
         self.dao = dao
 
     async def save_current_model(self,models):
+        logging.log("retrain_svc: Saving model to redis")
         r = redis.Redis(host=self.redis_ip, port=self.redis_port, db=0)
         model_dump = pickle.dumps(models)
         r.set("model",model_dump)
@@ -38,12 +40,14 @@ class RetrainingService:
         return training_dict
 
     async def get_training_data(self):
+        logging.log("retrain_svc: Getting data from sql")
         true_positives = await self.dao.get('true_positives')
         false_positives = await self.dao.get('false_positives')
         false_negatives = await self.dao.get('false_negatives')
         true_negatives = await self.dao.get('true_negatives')
         training_data = {}
 
+        logging.log("retrain_svc: Creating training dict")
         training_data = await self.modify_training_dict(training_data,true_positives,'tp','true_positive')
         training_data = await self.modify_training_dict(training_data,false_positives,'fp','false_positive')
         training_data = await self.modify_training_dict(training_data,false_negatives,'fn','false_negative')
@@ -89,6 +93,7 @@ class RetrainingService:
     async def train_on_data(self,training_dict):
         cv = CountVectorizer()
         models = {}
+        logging.log("retrain_svc: initiate training")
         for i in training_dict:
             clf = LogisticRegression(max_iter=2500, solver='lbfgs')
             X_data = []
@@ -106,6 +111,7 @@ class RetrainingService:
                 y_data.append(False)
                 X_data.append(f)
             word_counts = cv.fit_transform(X_data)
+            logging.log("retrain_svc: Fitting uid [{}] to model".format(i))
             clf.fit(word_counts,y_data)
             models[i] = clf
         return models
@@ -114,3 +120,4 @@ class RetrainingService:
         raw_data = await self.get_training_data()
         models = await self.train_on_data(raw_data)
         await self.save_current_model(models)
+        logging.log("retrain_svc: Retraining task finished")
