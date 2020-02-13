@@ -87,7 +87,7 @@ async def test_build_model():
     assert type(logreg) is LogisticRegression
         #pass # test building model and saving it
 
-async def prep_test_data(tech_name, techniques, true_negatives):
+async def prep_test_data(tech_name, techniques, true_negatives,cv):
     lst1, lst2, false_list, sampling = [], [], [], []
     getuid = ""
     len_truelabels = 0
@@ -126,8 +126,8 @@ async def prep_test_data(tech_name, techniques, true_negatives):
     df = pd.DataFrame({'text': lst1, 'category': lst2})
 
     # build model based on that technique
-    cv = CountVectorizer(max_features=2000)
-    X = cv.fit_transform(df['text']).toarray()
+    #cv = CountVectorizer(max_features=2000)
+    X = cv.transform(df['text']).toarray()
     y = df['category']
     _, X_test, _, y_test = train_test_split(X, y, test_size=0.1)
     return X_test,y_test
@@ -149,26 +149,28 @@ async def test_ml_performance():
         'Remote System Discovery', 'Network Service Scanning', 'Remote File Copy', 'Fallback Channels', 'System Time Discovery', 'Service Execution', 'PowerShell', 'Custom Command and Control Protocol', 'Commonly Used Port', 'Windows Admin Shares']        
         
         true_negs = ["This is a generic sentance","There aren't any relations to techniques in this senatnce","Random gibberish that blah blah blah!","Four score and seven years ago..."]
-        orig_score = {'Screen Capture':0.85,'Indicator Removal from Tools':1.0,'Windows Management Instrumentation':1.0,'System Owner/User Discovery':1.0,'Credential Dumping':1.0,'Audio Capture':1.0,'Timestomp':1.0,'Permission Groups Discovery':1.0,
-        'Email Collection':1.0,'Data from Removable Media':1.0,'Code Signing':1.0,'Process Hollowing':1.0,'Spearphishing Link':1.0,'Security Software Discovery':1.0,'Disabling Security Tools':1.0,'Automated Collection':1.0,'Clipboard Data':1.0,
-        'System Service Discovery':1.0,'Network Share Discovery':1.0,'Peripheral Device Discovery':1.0,'System Information Discovery':1.0,'Standard Application Layer Protocol':1.0,'Scheduled Task':1.0,'Execution through API':1.0,
-        'Custom Cryptographic Protocol':1.0,'Replication Through Removable Media':1.0,'Data from Local System':1.0,'Deobfuscate/Decode Files or Information':1.0,'Masquerading':1.0,'Process Injection':1.0,'DLL Search Order Hijacking':1.0,
-        'New Service':1.0,'Application Window Discovery':1.0,'Standard Cryptographic Protocol':1.0,'Binary Padding':1.0,'Remote Desktop Protocol':1.0,'File Deletion':1.0,
-        'Modify Registry':1.0,'Rundll32':1.0,'Regsvr32':1.0,'Spearphishing Attachment':1.0,'Video Capture':1.0,'Software Packing':1.0,'System Network Configuration Discovery':1.0,
-        'Account Discovery':1.0,'Connection Proxy':1.0,'Command-Line Interface':1.0,'Indicator Removal on Host':1.0,'File and Directory Discovery':1.0,
-        'Data Staged':1.0,'System Network Connections Discovery':1.0,'Scripting':1.0,'Web Service':1.0,'User Execution':1.0,'Process Discovery':1.0,'Exfiltration Over Command and Control Channel':1.0,
-        'Registry Run Keys / Startup Folder':1.0,'Shortcut Modification':1.0,'Exfiltration Over Alternative Protocol':1.0,'Data Obfuscation':1.0,'Valid Accounts':1.0,
-        'DLL Side-Loading':1.0,'Exploitation for Privilege Escalation':0.87,'Obfuscated Files or Information':1.0,'Data Compressed':1.0,'Credentials in Files':1.0,
-        'Input Capture':1.0,'Exploitation for Client Execution':1.0,'Standard Non-Application Layer Protocol':1.0,'Query Registry':1.0,'Uncommonly Used Port':1.0,
-        'Bypass User Account Control':1.0,'Data Encoding':1.0,'Data Encrypted':1.0,'Drive-by Compromise':1.0,'Access Toekn Manipulation':0.77,'Create Account':1.0,
-        'Remote System Discovery':1.0,'File and Directory DiscoveryNetwork Service Scanning':1.0,'Remote File Copy':1.0,'Fallback Channels':1.0,'System Time Discovery':1.0,
-        'Service Execution':1.0,'PowerShell':1.0,'Custom Command and Control Protocol':1.0,'Commonly User Port':1.0,'Windows Admin Shares':1.0}
+        orig_score = {'Screen Capture':0.85,'Indicator Removal from Tools':0.90,'Windows Management Instrumentation':0.90,'System Owner/User Discovery':0.90,'Credential Dumping':0.90,'Audio Capture':0.90,'Timestomp':0.90,'Permission Groups Discovery':0.90,
+        'Email Collection':0.90,'Data from Removable Media':0.90,'Code Signing':0.90,'Process Hollowing':0.90,'Spearphishing Link':0.90,'Security Software Discovery':0.90,'Disabling Security Tools':0.90,'Automated Collection':0.90,'Clipboard Data':0.90,
+        'System Service Discovery':0.90,'Network Share Discovery':0.90,'Peripheral Device Discovery':0.90,'System Information Discovery':0.90,'Standard Application Layer Protocol':0.90,'Scheduled Task':0.90,'Execution through API':0.90,
+        'Custom Cryptographic Protocol':0.90,'Replication Through Removable Media':0.90,'Data from Local System':0.90,'Deobfuscate/Decode Files or Information':0.90,'Masquerading':0.90,'Process Injection':0.90,'DLL Search Order Hijacking':0.90,
+        'New Service':0.90,'Application Window Discovery':0.90,'Standard Cryptographic Protocol':0.90,'Binary Padding':0.90,'Remote Desktop Protocol':0.90,'File Deletion':0.90,
+        'Modify Registry':0.90,'Rundll32':0.90,'Regsvr32':0.90,'Spearphishing Attachment':0.90,'Video Capture':0.90,'Software Packing':0.90,'System Network Configuration Discovery':0.90,
+        'Account Discovery':0.90,'Connection Proxy':0.90,'Command-Line Interface':0.90,'Indicator Removal on Host':0.90,'File and Directory Discovery':0.90,
+        'Data Staged':0.90,'System Network Connections Discovery':0.90,'Scripting':0.90,'Web Service':0.90,'User Execution':0.90,'Process Discovery':0.90,'Exfiltration Over Command and Control Channel':0.90,
+        'Registry Run Keys / Startup Folder':0.90,'Shortcut Modification':0.90,'Exfiltration Over Alternative Protocol':0.90,'Data Obfuscation':0.90,'Valid Accounts':0.90,
+        'DLL Side-Loading':0.90,'Exploitation for Privilege Escalation':0.87,'Obfuscated Files or Information':0.90,'Data Compressed':0.90,'Credentials in Files':0.90,
+        'Input Capture':0.90,'Exploitation for Client Execution':0.90,'Standard Non-Application Layer Protocol':0.90,'Query Registry':0.90,'Uncommonly Used Port':0.90,
+        'Bypass User Account Control':0.90,'Data Encoding':0.90,'Data Encrypted':0.90,'Drive-by Compromise':0.90,'Access Toekn Manipulation':0.77,'Create Account':0.90,
+        'Remote System Discovery':0.90,'File and Directory DiscoveryNetwork Service Scanning':0.90,'Remote File Copy':0.90,'Fallback Channels':0.90,'System Time Discovery':0.90,
+        'Service Execution':0.90,'PowerShell':0.90,'Custom Command and Control Protocol':0.90,'Commonly User Port':0.90,'Windows Admin Shares':0.90}
         for i in list_of_techs:
-            X_test,y_test = await prep_test_data(i,json_tech,true_negs)
-            _,logreg = model_dict[i]
+            cv,logreg = model_dict[i]
+            X_test,y_test = await prep_test_data(i,json_tech,true_negs,cv)
+            
             score_check = orig_score[i]
             score = logreg.score(X_test,y_test)
-            assert score >= score_check[i]
+            print("Testing {} score: {} target score: {}".format(i,score,score_check))
+            assert score >= score_check
             # result_score = original_score_value_from_file
             # assert score >= result_score
     pass # load model from store, test models performance
