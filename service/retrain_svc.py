@@ -3,7 +3,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 import numpy as np
-import spacy as sp
+from gensim.test.utils import common_texts
+from gensim.sklearn_api import W2VTransformer
 import redis
 import pickle
 import hashlib
@@ -113,15 +114,16 @@ class RetrainingService:
         # Also get examples from sentances that aren't related to attack at all (maybe load into redis and pull from there)
         # split negative examples on 70-30 split, 30% are positive examples 70% are normal sentances
 
-        unrelated_sentances = ["You're good at English when you know the difference between a man eating chicken and a man-eating chicken.","In the end",
+        unrelated_sentances = ["You're good at English when you know the difference between a man eating chicken and a man-eating chicken.",
         "Pair your designer cowboy hat with scuba gear for a memorable occasion.","When nobody is around, the trees gossip about the people who have walked under them.",
-        "The three-year-old girl ran down the beach as the kite flew behind her.","He always wore his sunglasses at night.",
+        "The three-year-old girl ran down the beach as the kite flew behind her.","Nothing seemed out of place except the washing machine in the bar.",
         "The pigs were insulted that they were named hamburgers.","Weather is not trivial - it's especially important when you're standing in it.",
         "Sometimes it is better to just walk away from things and go back to them later when you’re in a better frame of mind.",
         "The quick brown fox jumps over the lazy dog.","I think I will buy the red car, or I will lease the blue one.",
         "Don't step on the broken glass.","Would you rather be the best player on a horrible team or the worst player on a great team?",
-        "Where is your favorite place to shop?","What was your least favorite subject in school?","Aha! I figured it out!","Bye! See you later!",
-        "Come on. Hurry up.","Oh, wow, that is so cool!","Nothing beats a complete sentence.","Joe made the sugar cookies; Susan decorated them."]
+        "The snow-covered path was no help in finding his way out of the backcountry.","What was your least favorite subject in school?",
+        "Joe made the sugar cookies; Susan decorated them.","The opportunity of a lifetime passed before him as he tried to decide between a cone or a cup.",
+        "He was disappointed when he found the beach to be so sandy and the sun so sunny."]
 
         to_get = num_pos_examples-current_num_neg
 
@@ -142,7 +144,8 @@ class RetrainingService:
         return negative_examples
 
     async def train_on_data(self,training_dict):
-        cv = CountVectorizer()
+        cv = CountVectorizer(max_features=50)
+
         models = {}
         logging.info("retrain_svc: initiate training")
         for j in training_dict:
@@ -164,14 +167,18 @@ class RetrainingService:
                 y_data.append(False)
             #X_data.extend(negative_values)
             #y_data.extend(falses)
-
-            if(len(X_data) > len(negative_values)):
-                clf = LogisticRegression(max_iter=2500, solver='lbfgs')
-                word_counts = cv.fit_transform(np.array(X_data))
-                
-                logging.info("retrain_svc: Fitting uid [{}] to model".format(j))
-                clf.fit(word_counts,y_data)
-                models[j] = (word_counts,clf)
+            
+            if(True in y_data and False in y_data):
+                X_train,X_test,y_train,y_test = train_test_split(np.array(X_data),np.array(y_data),test_size=0.1)
+                if(True in y_train and False in y_train):
+                    clf = LogisticRegression(max_iter=2500, solver='lbfgs')
+                    word_counts = cv.fit_transform(X_train)
+                    logging.info("retrain_svc: Fitting uid [{}] to model".format(j))
+                    clf.fit(word_counts,y_train)
+                    test_counts = cv.transform(X_test)
+                    #clf.score(test_counts,y_test)
+                    print("retrain_svc: Accuracy on test set = {}".format(clf.score(test_counts,y_test)))
+                    models[j] = (word_counts,clf)
         return models
 
     async def train(self): 
