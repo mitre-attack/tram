@@ -2,9 +2,11 @@ import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
+import numpy as np
 import spacy as sp
 import redis
 import pickle
+import hashlib
 import logging
 
 
@@ -26,7 +28,9 @@ class RetrainingService:
         logging.info("retrain_svc: Saving model to redis")
         r = redis.Redis(host=self.redis_ip, port=self.redis_port, db=0)
         model_dump = pickle.dumps(models)
+        model_hash = hashlib.md5(model_dump).hexdigest()
         r.set("model",model_dump)
+        r.set("model_hash",model_hash)
 
     async def modify_training_dict(self,training_dict,in_data,dict_key,in_key):
         for t in in_data:
@@ -90,30 +94,84 @@ class RetrainingService:
         '''
         return training_data
 
+    async def fill_arrays(self,i,X,y,key):
+        try:
+            for t in i[key]:
+                X.append(t)
+                if(key == 'fp' or key == 'tn'):
+                    y.append(False)
+                else:
+                    y.append(True)
+        except Exception:
+            _=0
+        return X,y
+
+    async def create_negative_training_set(self,training_dict,num_pos_examples,current_num_neg,key):
+        # make sure negative examples are the same length as positive examples
+        # grab data from other positive examples but ensure that they aren't the same key
+        # Get data from precreated training dict
+        # Also get examples from sentances that aren't related to attack at all (maybe load into redis and pull from there)
+        # split negative examples on 70-30 split, 30% are positive examples 70% are normal sentances
+
+        unrelated_sentances = ["You're good at English when you know the difference between a man eating chicken and a man-eating chicken.","In the end",
+        "Pair your designer cowboy hat with scuba gear for a memorable occasion.","When nobody is around, the trees gossip about the people who have walked under them.",
+        "The three-year-old girl ran down the beach as the kite flew behind her.","He always wore his sunglasses at night.",
+        "The pigs were insulted that they were named hamburgers.","Weather is not trivial - it's especially important when you're standing in it.",
+        "Sometimes it is better to just walk away from things and go back to them later when you’re in a better frame of mind.",
+        "The quick brown fox jumps over the lazy dog.","I think I will buy the red car, or I will lease the blue one.",
+        "Don't step on the broken glass.","Would you rather be the best player on a horrible team or the worst player on a great team?",
+        "Where is your favorite place to shop?","What was your least favorite subject in school?","Aha! I figured it out!","Bye! See you later!",
+        "Come on. Hurry up.","Oh, wow, that is so cool!","Nothing beats a complete sentence.","Joe made the sugar cookies; Susan decorated them."]
+
+        to_get = num_pos_examples-current_num_neg
+
+        neg_attack_num = round(to_get*0.333)
+        attack_keys = list(training_dict.keys())
+        #print(attack_keys)
+        negative_examples = []
+
+        for _ in range(neg_attack_num):
+            neg_key = np.random.choice(attack_keys)
+            while(neg_key == key or len(training_dict[neg_key]['tp']) == 0): # make sure key is not the positive example key
+                neg_key = np.random.choice(attack_keys)
+            negative_examples.append(np.random.choice(training_dict[neg_key]['tp']))
+            
+        for _ in range(to_get-neg_attack_num): # loop through the number of total wanted minu the number already retrieved
+            negative_examples.append(np.random.choice(unrelated_sentances))
+        #falses = [False*len(negative_examples)]
+        return negative_examples
+
     async def train_on_data(self,training_dict):
         cv = CountVectorizer()
         models = {}
         logging.info("retrain_svc: initiate training")
-        for i in training_dict:
-            clf = LogisticRegression(max_iter=2500, solver='lbfgs')
+        for j in training_dict:
             X_data = []
             y_data = []
-            for t in i['tp']:
-                y_data.append(True)
-                X_data.append(t)
-            for t in i['fn']:
-                y_data.append(True)
-                X_data.append(t)
-            for f in i['fp']:
+            i = training_dict[j]
+            
+            X_data,y_data = await self.fill_arrays(i,X_data,y_data,'tp')
+            X_data,y_data = await self.fill_arrays(i,X_data,y_data,'fn')
+            X_data,y_data = await self.fill_arrays(i,X_data,y_data,'fp')
+            X_data,y_data = await self.fill_arrays(i,X_data,y_data,'tn')
+
+            len_pos = len([i for i in y_data if i == True])
+            len_neg = len(y_data) - len_pos
+
+            negative_values = await self.create_negative_training_set(training_dict,len_pos,len_neg,j)
+            for i in negative_values:
+                X_data.append(i)
                 y_data.append(False)
-                X_data.append(f)
-            for f in i['tn']:
-                y_data.append(False)
-                X_data.append(f)
-            word_counts = cv.fit_transform(X_data)
-            logging.info("retrain_svc: Fitting uid [{}] to model".format(i))
-            clf.fit(word_counts,y_data)
-            models[i] = clf
+            #X_data.extend(negative_values)
+            #y_data.extend(falses)
+
+            if(len(X_data) > len(negative_values)):
+                clf = LogisticRegression(max_iter=2500, solver='lbfgs')
+                word_counts = cv.fit_transform(np.array(X_data))
+                
+                logging.info("retrain_svc: Fitting uid [{}] to model".format(j))
+                clf.fit(word_counts,y_data)
+                models[j] = (word_counts,clf)
         return models
 
     async def train(self): 
