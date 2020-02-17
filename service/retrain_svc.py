@@ -26,6 +26,11 @@ class RetrainingService:
         self.dao = dao
 
     async def save_current_model(self,models):
+        '''
+        description: loads models dictionary into redis
+        input: dictionary of scikit-learn LogisticRegression models with attack_uid as keys
+        output: nil
+        '''
         logging.info("retrain_svc: Saving model to redis")
         r = redis.Redis(host=self.redis_ip, port=self.redis_port, db=0)
         model_dump = pickle.dumps(models)
@@ -34,6 +39,11 @@ class RetrainingService:
         r.set("model_hash",model_hash)
 
     async def modify_training_dict(self,training_dict,in_data,dict_key,in_key):
+        '''
+        description: Creates the training data dictionary
+        input: training data dictionary, data to put in dictionary, training dictionary key, input data key
+        output: training dictionary
+        '''
         for t in in_data:
             t_uid = t['uid']
             if(t_uid not in training_dict.keys()):
@@ -44,58 +54,33 @@ class RetrainingService:
                 training_dict[t_uid][dict_key].append(t[in_key])
         return training_dict
 
-    async def get_training_data(self):
+    async def get_training_data(self): # gets and assembles a dictionary of training data from the database
+        '''
+        description: Gets training data from database, and outputs a dictionary of scema {'attack_uid':{'accuracy_type' (fp, tp, ...)}}
+        input: nil
+        output: dictionary of dictionaries
+        '''
         logging.info("retrain_svc: Getting data from sql")
-        true_positives = await self.dao.get('true_positives')
+        true_positives = await self.dao.get('true_positives') # Grab all training data from database
         false_positives = await self.dao.get('false_positives')
         false_negatives = await self.dao.get('false_negatives')
         true_negatives = await self.dao.get('true_negatives')
         training_data = {}
 
         logging.info("retrain_svc: Creating training dict")
-        training_data = await self.modify_training_dict(training_data,true_positives,'tp','true_positive')
+        training_data = await self.modify_training_dict(training_data,true_positives,'tp','true_positive') # Assemble dictionary for training data
         training_data = await self.modify_training_dict(training_data,false_positives,'fp','false_positive')
         training_data = await self.modify_training_dict(training_data,false_negatives,'fn','false_negative')
         training_data = await self.modify_training_dict(training_data,true_negatives,'tn','sentence')
 
-
-        '''
-        for t in true_positives:
-            t_uid = t['uid']
-            if(t_uid not in training_data.keys()):
-                training_data[t_uid] = {'tp':[]}
-            elif('tp' not in training_data[t_uid].keys()):
-                training_data[t_uid]['tp'] = []
-            else:
-                training_data[t_uid]['tp'].append(t['true_positive'])
-        for p in false_positives:
-            p_uid = p['uid']
-            if(p_uid not in training_data.keys()):
-                training_data[p_uid] = {'fp':[]}
-            elif('fp' not in training_data[p_uid].keys()):
-                training_data[p_uid]['fp'] = []
-            else:
-                training_data[p_uid]['fp'].append(p['false_positive'])
-        for n in false_negatives:
-            n_uid = n['uid']
-            if(n_uid not in training_data.keys()):
-                training_data[n_uid] = {'fn':[]}
-            elif('fn' not in training_data[n_uid].keys()):
-                training_data[n_uid]['fn'] = []
-            else:
-                training_data[n_uid]['fn'].append(n['false_negative'])
-        for n in true_negatives:
-            n_uid = n['uid']
-            if(n_uid not in training_data.keys()):
-                training_data[n_uid] = {'tn':[]}
-            elif('tn' not in training_data[n_uid].keys()):
-                training_data[n_uid]['tn'] = []
-            else:
-                training_data[n_uid]['tn'].append(n['true_negative'])
-        '''
         return training_data
 
     async def fill_arrays(self,i,X,y,key):
+        '''
+        description: helper function to fill training data arrays
+        input: inner training dictionary data, X_data, y_data, inner dictionary key
+        output: X_data,y_data
+        '''
         try:
             for t in i[key]:
                 X.append(t)
@@ -108,6 +93,12 @@ class RetrainingService:
         return X,y
 
     async def create_negative_training_set(self,training_dict,num_pos_examples,current_num_neg,key):
+        '''
+        description: Creates a set of training data containing only negative training examples
+        input: training data, number of positive examples in training data for key, current number of negative
+        examples for key, key (attack_uid to train on)
+        output: negative example training data 
+        '''
         # make sure negative examples are the same length as positive examples
         # grab data from other positive examples but ensure that they aren't the same key
         # Get data from precreated training dict
@@ -144,6 +135,11 @@ class RetrainingService:
         return negative_examples
 
     async def train_on_data(self,training_dict):
+        '''
+        description: method to train the boosted logistic regression models
+        input: training data
+        output: dictionary of models (boosted classifier)
+        '''
         cv = CountVectorizer(max_features=50)
 
         models = {}
@@ -182,6 +178,11 @@ class RetrainingService:
         return models
 
     async def train(self): 
+        '''
+        description: "main" function, all other functions are initiated and run out of here
+        input: nil
+        output: nil
+        '''
         raw_data = await self.get_training_data()
         models = await self.train_on_data(raw_data)
         await self.save_current_model(models)
