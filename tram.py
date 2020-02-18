@@ -70,6 +70,19 @@ async def init(host, port):
     await runner.setup()
     await web.TCPSite(runner, host, port).start()
 
+def load_model_to_redis():
+    with open('models/model_dict.json','r') as f:
+        model_raw = f.read()
+    model_dump = json.loads(model_raw)
+    model_hash = model_dump.keys()[0]
+    model_data = model_dump[model_hash]
+    if(model_data == "null" or model_hash == "null"):
+        return
+    else:
+        r = redis.Redis(host='localhost',port=6379,db=0)
+        r.set("model",model_data)
+        r.set("model_hash",model_hash)
+
 def save_redis_model():
     logging.info("Ctrl-C pressed...saving redis model to disk")
     r = redis.Redis(host='localhost',port=6379,db=0)
@@ -90,6 +103,7 @@ def main(host, port, taxii_local=False, build=False, json_file=None):
     :param json_file: Expects a path to the enterprise attack json if the 'offline' build method is called.
     :return: nil
     """
+    load_model_to_redis()
     loop = asyncio.get_event_loop()
     loop.create_task(background_tasks(taxii_local=taxii_local, build=build, json_file=json_file))
     loop.create_task(ml_svc.check_nltk_packs())
