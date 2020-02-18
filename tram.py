@@ -3,6 +3,8 @@ import sys
 import asyncio
 import logging
 import yaml
+import redis
+import json
 
 import aiohttp_jinja2
 import jinja2
@@ -68,6 +70,16 @@ async def init(host, port):
     await runner.setup()
     await web.TCPSite(runner, host, port).start()
 
+def save_redis_model():
+    logging.info("Ctrl-C pressed...saving redis model to disk")
+    r = redis.Redis(host='localhost',port=6379,db=0)
+    model_data = r.get("model") # pickled version of the models
+    model_hash = r.get("model_hash") # hash for the model
+    data = {}
+    data[model_hash] = model_data
+    with open('models/model_dict.json', 'w') as outfile:
+        json.dump(data, outfile)
+    logging.info("Model saved, Goodbye")
 
 def main(host, port, taxii_local=False, build=False, json_file=None):
     """
@@ -85,6 +97,7 @@ def main(host, port, taxii_local=False, build=False, json_file=None):
     try:
         loop.run_forever()
     except KeyboardInterrupt:
+        save_redis_model()
         pass
 
 
