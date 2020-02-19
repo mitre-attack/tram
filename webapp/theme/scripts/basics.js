@@ -176,6 +176,6 @@ $(window).resize(function() {
 function addMissingTechnique(){
     uid = $("#missingTechniqueSelect :selected").val();
     restRequest('POST', {'index':'missing_technique', 'sentence_id': sentence_id, 'attack_uid':uid, 'element_tag':element_clicked_tag}, show_info);
-    sentenceContext(sentence_id, element_clicked_tag, uid)
+    restRequest('POST', {'index':'confirmed_sentences', 'sentence_id': sentence_id, 'element_tag':element_clicked_tag}, updateConfirmedContext);
 }
 
