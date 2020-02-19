@@ -162,8 +162,8 @@ async def test_ml_performance():
         'DLL Side-Loading':0.90,'Exploitation for Privilege Escalation':0.87,'Obfuscated Files or Information':0.90,'Data Compressed':0.90,'Credentials in Files':0.90,
         'Input Capture':0.90,'Exploitation for Client Execution':0.90,'Standard Non-Application Layer Protocol':0.90,'Query Registry':0.90,'Uncommonly Used Port':0.90,
         'Bypass User Account Control':0.90,'Data Encoding':0.90,'Data Encrypted':0.90,'Drive-by Compromise':0.90,'Access Token Manipulation':0.77,'Create Account':0.90,
-        'Remote System Discovery':0.90,'File and Directory DiscoveryNetwork Service Scanning':0.90,'Remote File Copy':0.90,'Fallback Channels':0.90,'System Time Discovery':0.90,
-        'Service Execution':0.90,'PowerShell':0.90,'Custom Command and Control Protocol':0.90,'Commonly User Port':0.90,'Windows Admin Shares':0.90}
+        'Remote System Discovery':0.90,'Network Service Scanning':0.90,'Remote File Copy':0.90,'Fallback Channels':0.90,'System Time Discovery':0.90,
+        'Service Execution':0.90,'PowerShell':0.90,'Custom Command and Control Protocol':0.90,'Commonly Used Port':0.90,'Windows Admin Shares':0.90}
         count = 0
         for i in list_of_techs:
             cv,logreg = model_dict[i]
