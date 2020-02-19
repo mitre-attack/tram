@@ -177,7 +177,7 @@ class RestService:
         # update card to reflect the end of queue
         await self.dao.update('reports', 'title', criteria['title'], dict(current_status='needs_review'))
         temp = await self.dao.get('reports',dict(title=criteria['title']))
-        criteria['id'] = temp['id']
+        criteria['id'] = temp[0]['uid']
         # criteria['id'] = await self.dao.update('reports', dict(title=criteria['title'], url=criteria['url'],current_status="needs_review"))
         report_id = criteria['id']
         for sentence in analyzed_html:
