@@ -71,28 +71,43 @@ async def init(host, port):
     await web.TCPSite(runner, host, port).start()
 
 def load_model_to_redis():
-    with open('models/model_dict.json','r') as f:
-        model_raw = f.read()
-    model_dump = json.loads(model_raw)
-    model_hash = model_dump.keys()[0]
-    model_data = model_dump[model_hash]
-    if(model_data == "null" or model_hash == "null"):
-        return
-    else:
-        r = redis.Redis(host='localhost',port=6379,db=0)
-        r.set("model",model_data)
-        r.set("model_hash",model_hash)
+    try:
+        with open('models/model_dict.json','r') as f:
+            model_raw = f.read()
+        model_dump = json.loads(model_raw)
+        model_hash = list(model_dump.keys())[0]
+        model_data = model_dump[model_hash]
+        if(model_data == None or model_hash == "null"):
+            return
+        else:
+            try:
+                r = redis.Redis(host='localhost',port=6379,db=0)
+                r.set("model",model_data)
+                r.set("model_hash",model_hash)
+            except Exception:
+                logging.critical("!!!THERE WAS AN ERROR WITH THE REDIS STORE!!! Maybe its not running?")
+    except Exception:
+        logging.warning("Model couldn't be loaded from disk")
+    
 
 def save_redis_model():
     logging.info("Ctrl-C pressed...saving redis model to disk")
-    r = redis.Redis(host='localhost',port=6379,db=0)
-    model_data = r.get("model") # pickled version of the models
-    model_hash = r.get("model_hash") # hash for the model
-    data = {}
-    data[model_hash] = model_data
-    with open('models/model_dict.json', 'w') as outfile:
-        json.dump(data, outfile)
-    logging.info("Model saved, Goodbye")
+    try:
+        r = redis.Redis(host='localhost',port=6379,db=0)
+        model_data = r.get("model") # pickled version of the models
+        model_hash = r.get("model_hash") # hash for the model
+        flag = True
+    except Exception:
+        logging.critical("!!!THERE WAS AN ERROR WITH THE REDIS STORE!!! Maybe its not running?")
+        flag = False
+    if(flag == True):
+        data = {}
+        data[model_hash] = model_data
+        with open('models/model_dict.json', 'w') as outfile:
+            json.dump(data, outfile)
+        logging.info("Model saved, Goodbye")
+    else:
+        logging.info("Something went wrong with redis, Goodbye")
 
 def main(host, port, taxii_local=False, build=False, json_file=None):
     """
