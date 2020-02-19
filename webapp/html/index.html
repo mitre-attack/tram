@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 {% block content %}
+<meta http-equiv="refresh" content="30"/>
 <style>
     .footer { position: fixed; }
 </style>
-
     <div class="container-fluid">
       <div class="row">
         <nav class="col-md-2 d-none d-md-block bg-light sidebar">
@@ -26,7 +26,38 @@
                                 <button type="submit" onclick='submit_report()' class="btn btn-primary">Submit</button>
                             </form>
                       </div>
+                        <hr>
+                      <form class="md-form">
+                        <div class="file-field">
+                          <a class="btn-floating peach-gradient mt-0 float-left">
+                            <i class="fas fa-paperclip" aria-hidden="true"></i>
+                            <input style="margin-bottom: 15px" type="file" id="csv_file">
+                          </a>
+                          <div class="file-path-wrapper">
+                            <button type="submit" onclick="upload_file()" class="btn btn-primary">Upload csv file</button>
+                          </div>
+                        </div>
+                      </form>
                     </div>
+                    <br>
+                    <hr>
+                    <div class="card bg-light">
+                        <div id="queue" class="card-body">
+                            <h6 class="card-title text-uppercase text-truncate py-2">In queue</h6>
+                            <div class="items border border-light">
+                                {% for report in queue %}
+                                <div class="card shadow-sm" id="queue-{{report.uid}}">
+                                <div class="card-body">
+                                    <!--<a onclick="deleteReport({{report.uid}})"
+                                       class="glyphicon glyphicon-trash btn-sm btn-outline-danger float-right"></a>-->
+                                    <p>
+                                    <p class="card-text">{{report.title}}</p>
+                                </div>
+                                </div>
+                                {% endfor %}
+                                <div id="testing" class="dropzone rounded" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="clearDrop(event)"> &nbsp </div>
+                            </div>
+                        </div>
                 </div>
           </div>
         </nav>

@@ -62,6 +62,24 @@ function submit_report(){
     }    
 }
 
+function upload_file(){
+  //var fileName = this.val().split("\\").pop();
+
+  console.log(document.getElementById("csv_file"))
+  var file = document.getElementById("csv_file").files[0];
+  if(file){
+    var reader = new FileReader();
+    reader.readAsText(file, "UTF-8");
+    reader.onload = function(evt){
+      console.log(evt.target.result)
+      restRequest('POST', {'index':'insert_csv','file':evt.target.result},show_info);
+    }
+    reader.onerror = function(evt){
+      alert("Error reading file");
+    }
+  }
+}
+
 function show_dropdown() {
   document.getElementById("myDropdown").classList.toggle("show");
 }

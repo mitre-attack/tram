@@ -22,6 +22,7 @@ class WebAPI:
     @template('index.html')
     async def index(self, request):
         index = dict(needs_review=await self.data_svc.status_grouper("needs_review"))
+        index['queue'] = await self.data_svc.status_grouper("queue")
         index['in_review'] = await self.data_svc.status_grouper("in_review")
         index['completed'] = await self.data_svc.status_grouper("completed")
         return index
@@ -41,6 +42,7 @@ class WebAPI:
                 false_negative=lambda d: self.rest_svc.false_negative(criteria=d),
                 set_status=lambda d: self.rest_svc.set_status(criteria=d),
                 insert_report=lambda d: self.rest_svc.insert_report(criteria=d),
+                insert_csv=lambda d: self.rest_svc.insert_csv(criteria=d),
                 remove_sentences=lambda d: self.rest_svc.remove_sentences(criteria=d),
                 delete_report=lambda d: self.rest_svc.delete_report(criteria=d),
                 sentence_context=lambda d: self.rest_svc.sentence_context(criteria=d),

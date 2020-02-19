@@ -1,5 +1,7 @@
 import json
 import asyncio
+from io import StringIO
+import pandas as pd
 
 class RestService:
 
@@ -81,11 +83,22 @@ class RestService:
         # criteria['id'] = await self.dao.insert('reports', dict(title=criteria['title'], url=criteria['url'],
         #                                                       current_status="needs_review"))
         for i in range(len(criteria['title'])):
-            temp_dict = dict(title=criteria['title'][i], url=criteria['url'][i],current_status="needs_review")
+            temp_dict = dict(title=criteria['title'][i], url=criteria['url'][i],current_status="queue")
+            temp_dict['id'] = await self.dao.insert('reports', temp_dict)
             await self.queue.put(temp_dict)
         # criteria = dict(title=criteria['title'], url=criteria['url'],current_status="needs_review")
         # await self.queue.put(criteria)
         asyncio.create_task(self.check_queue()) # check queue background task
+        await asyncio.sleep(0.01)
+
+    async def insert_csv(self,criteria=None):
+        file = StringIO(criteria['file'])
+        df = pd.read_csv(file)
+        for row in range(df.shape[0]):
+            temp_dict = dict(title=df['title'][row],url=df['url'][row],current_status="queue")
+            temp_dict['id'] = await self.dao.insert('reports', temp_dict)
+            await self.queue.put(temp_dict)
+        asyncio.create_task(self.check_queue())
         await asyncio.sleep(0.01)
 
     async def check_queue(self):
@@ -161,9 +174,11 @@ class RestService:
         # Merge ML and Reg hits
         analyzed_html = await self.ml_svc.combine_ml_reg(ml_analyzed_html, reg_analyzed_html)
 
-        # insert card into database
-        criteria['id'] = await self.dao.insert('reports', dict(title=criteria['title'], url=criteria['url'],
-                                                                            current_status="needs_review"))
+        # update card to reflect the end of queue
+        await self.dao.update('reports', 'title', criteria['title'], dict(current_status='needs_review'))
+        temp = await self.dao.get('reports',dict(title=criteria['title']))
+        criteria['id'] = temp[0]['uid']
+        # criteria['id'] = await self.dao.update('reports', dict(title=criteria['title'], url=criteria['url'],current_status="needs_review"))
         report_id = criteria['id']
         for sentence in analyzed_html:
             if sentence['ml_techniques_found']:
