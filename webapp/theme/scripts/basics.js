@@ -143,7 +143,7 @@ function updateConfirmedContext(data){
     })
 }
 
-function downloadLayer(data){
+function downloadJSON(data){
   // Create the name of the JSON download file from the name of the report
   var json = JSON.parse(data) 
   var title = json['name'] //document.getElementById("title").value;
@@ -164,7 +164,7 @@ function downloadLayer(data){
   a.remove();
 }
 
-function viewLayer(data){
+function viewJSON(data){
   console.info("viewLayer: " + data)
 }
 
