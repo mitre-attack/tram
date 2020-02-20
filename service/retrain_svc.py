@@ -3,8 +3,6 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 import numpy as np
-from gensim.test.utils import common_texts
-from gensim.sklearn_api import W2VTransformer
 import redis
 import pickle
 import hashlib
