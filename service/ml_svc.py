@@ -148,4 +148,3 @@ class MLService:
             logging.warning('Could not find the stopwords pack, downloading now')
             nltk.download('stopwords')
 
-

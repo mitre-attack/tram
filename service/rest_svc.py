@@ -3,6 +3,7 @@ import asyncio
 from io import StringIO
 import pandas as pd
 
+
 class RestService:
 
     def __init__(self, web_svc, reg_svc, data_svc, ml_svc, dao):
@@ -11,8 +12,8 @@ class RestService:
         self.web_svc = web_svc
         self.ml_svc = ml_svc
         self.reg_svc = reg_svc
-        self.queue = asyncio.Queue() # task queue
-        self.resources = [] # resource array
+        self.queue = asyncio.Queue()  # task queue
+        self.resources = []  # resource array
 
     async def false_negative(self, criteria=None):
         sentence_dict = await self.dao.get('report_sentences', dict(uid=criteria['sentence_id']))
@@ -48,7 +49,7 @@ class RestService:
             return dict(status='Successfully moved sentence ' + criteria['sentence_id'])
 
     async def sentence_context(self, criteria=None):
-        if criteria['element_tag']=='img':
+        if criteria['element_tag'] == 'img':
             return []
         sentence_hits = await self.dao.get('report_sentence_hits', dict(uid=criteria['uid']))
         for hit in sentence_hits:
@@ -68,7 +69,8 @@ class RestService:
         sentence_dict = await self.dao.get('report_sentences', dict(uid=criteria['sentence_id']))
         sentence_to_insert = await self.web_svc.remove_html_markup_and_found(sentence_dict[0]['text'])
         await self.dao.insert('true_positives', dict(sentence_id=sentence_dict[0]['uid'], uid=criteria['attack_uid'],
-                                                    true_positive=sentence_to_insert, element_tag=criteria['element_tag']))
+                                                     true_positive=sentence_to_insert,
+                                                     element_tag=criteria['element_tag']))
         return dict(status='inserted')
 
     async def false_positive(self, criteria=None):
@@ -83,19 +85,19 @@ class RestService:
         # criteria['id'] = await self.dao.insert('reports', dict(title=criteria['title'], url=criteria['url'],
         #                                                       current_status="needs_review"))
         for i in range(len(criteria['title'])):
-            temp_dict = dict(title=criteria['title'][i], url=criteria['url'][i],current_status="queue")
+            temp_dict = dict(title=criteria['title'][i], url=criteria['url'][i], current_status="queue")
             temp_dict['id'] = await self.dao.insert('reports', temp_dict)
             await self.queue.put(temp_dict)
         # criteria = dict(title=criteria['title'], url=criteria['url'],current_status="needs_review")
         # await self.queue.put(criteria)
-        asyncio.create_task(self.check_queue()) # check queue background task
+        asyncio.create_task(self.check_queue())  # check queue background task
         await asyncio.sleep(0.01)
 
-    async def insert_csv(self,criteria=None):
+    async def insert_csv(self, criteria=None):
         file = StringIO(criteria['file'])
         df = pd.read_csv(file)
         for row in range(df.shape[0]):
-            temp_dict = dict(title=df['title'][row],url=df['url'][row],current_status="queue")
+            temp_dict = dict(title=df['title'][row], url=df['url'][row], current_status="queue")
             temp_dict['id'] = await self.dao.insert('reports', temp_dict)
             await self.queue.put(temp_dict)
         asyncio.create_task(self.check_queue())
@@ -125,7 +127,7 @@ class RestService:
                 task = asyncio.create_task(self.start_analysis(criteria))
                 self.resources.append(task)
             else:
-                criteria = await self.queue.get() # get next task off queue and run it
+                criteria = await self.queue.get()  # get next task off queue and run it
                 task = asyncio.create_task(self.start_analysis(criteria))
                 self.resources.append(task)
 
@@ -176,7 +178,7 @@ class RestService:
 
         # update card to reflect the end of queue
         await self.dao.update('reports', 'title', criteria['title'], dict(current_status='needs_review'))
-        temp = await self.dao.get('reports',dict(title=criteria['title']))
+        temp = await self.dao.get('reports', dict(title=criteria['title']))
         criteria['id'] = temp[0]['uid']
         # criteria['id'] = await self.dao.update('reports', dict(title=criteria['title'], url=criteria['url'],current_status="needs_review"))
         report_id = criteria['id']
@@ -199,16 +201,16 @@ class RestService:
 
         # Get the report sentence information for the sentence id
         sentence_dict = await self.dao.get('report_sentences', dict(uid=criteria['sentence_id']))
-        
+
         # Get the sentence to insert by removing html markup
         sentence_to_insert = await self.web_svc.remove_html_markup_and_found(sentence_dict[0]['text'])
-        
+
         # Insert new row in the true_positives database table to indicate a new confirmed technique
         await self.dao.insert('true_positives', dict(sentence_id=sentence_dict[0]['uid'],
                                                      uid=criteria['attack_uid'],
                                                      true_positive=sentence_to_insert,
                                                      element_tag=criteria['element_tag']))
-        
+
         # Insert new row in the report_sentence_hits database table to indicate a new confirmed technique
         # This is needed to ensure that requests to get all confirmed techniques works correctly
         await self.dao.insert('report_sentence_hits', dict(uid=criteria['sentence_id'],
@@ -216,12 +218,11 @@ class RestService:
                                                            attack_technique_name=attack_dict[0]['name'],
                                                            report_uid=sentence_dict[0]['report_uid'],
                                                            attack_tid=attack_dict[0]['tid']))
-        
+
         # If the found_status for the sentence id is set to false when adding a missing technique
-        # then update the found_status value to true for the sentence id in the report_sentence table 
+        # then update the found_status value to true for the sentence id in the report_sentence table
         if sentence_dict[0]['found_status'] == 'false':
             await self.dao.update('report_sentences', 'uid', criteria['sentence_id'], dict(found_status='true'))
-        
+
         # Return status message
         return dict(status='inserted')
-

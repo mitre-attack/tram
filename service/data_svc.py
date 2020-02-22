@@ -2,8 +2,11 @@ import re
 import json
 import logging
 from taxii2client import Collection
+from fastapi import BackgroundTasks
 from stix2 import TAXIICollectionSource, Filter
 
+
+background_tasks = BackgroundTasks
 
 def defang_text(text):
     """
@@ -21,6 +24,10 @@ class DataService:
     def __init__(self, dao, web_svc):
         self.dao = dao
         self.web_svc = web_svc
+
+    @staticmethod
+    async def connor_test():
+        print('hello connor from fast api')
 
     async def reload_database(self, schema='conf/schema.sql'):
         """
@@ -217,7 +224,7 @@ class DataService:
             # create a technique object and add it to the list of techniques.
             technique = {}
             technique['score'] = 1
-            technique['techniqueID'] = hit['attack_tid'] 
+            technique['techniqueID'] = hit['attack_tid']
             technique['comment'] = hit['true_positive']
             techniques.append(technique)
         # Return the list of confirmed techniques
@@ -234,4 +241,3 @@ class DataService:
             except:
                 print(v)
         return list_of_legacy, list_of_techs
-

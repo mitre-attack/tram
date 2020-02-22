@@ -29,7 +29,8 @@ class WebService:
             text_match_found = False
             image_found = False
             for forward_advancer in range(counter, len(htmltext)):
-                if 'src=' in htmltext[forward_advancer] and htmltext[forward_advancer] not in seen_images and image_found is False:
+                if 'src=' in htmltext[forward_advancer] and htmltext[
+                    forward_advancer] not in seen_images and image_found is False:
                     # Found an image, put it in data but don't advance incase there's text.
                     soup = BeautifulSoup(htmltext[forward_advancer], 'html.parser')
                     source = soup.img['src']
@@ -38,7 +39,7 @@ class WebService:
                     results.append(img_dict)
                     seen_images.append(source)
                     image_found = True
-        
+
                 if first_word in htmltext[forward_advancer]:
                     # Found the matching word, put the text into the data.
                     res_dict = dict()
@@ -46,7 +47,7 @@ class WebService:
                         res_dict = await self._construct_text_dict(pt, 'header')
                     elif '<li' in htmltext[forward_advancer]:
                         res_dict = await self._construct_text_dict(pt, 'li')
-                    else: 
+                    else:
                         res_dict = await self._construct_text_dict(pt, 'p')
                     results.append(res_dict)
                     counter = forward_advancer + 1
@@ -152,7 +153,6 @@ class WebService:
         final_element['confirmed'] = 'false'
         return final_element
 
-
     @staticmethod
     async def _build_final_html_text(sentence, single_sentence, tag):
         final_element = dict()
@@ -212,11 +212,10 @@ class WebService:
     @staticmethod
     async def _restore_periods_on_sentences(sentence_list):
         sen_len = len(sentence_list)
-        if sen_len == 1: 
+        if sen_len == 1:
             return sentence_list
-        else: 
+        else:
             last = sentence_list[-1]
-            sentence_list = [sentence_list[i] + "." for i in range(sen_len-1)]
+            sentence_list = [sentence_list[i] + "." for i in range(sen_len - 1)]
             sentence_list.append(last)
             return sentence_list
-
