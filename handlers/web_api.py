@@ -119,8 +119,7 @@ class WebAPI:
         """
         # Get the report
         report = await self.dao.get('reports', dict(title=request.match_info.get('file')))
-        sentences = await self.data_svc.build_sentences(report[0]['uid'])
-        attack_uids = await self.dao.get('attack_uids')
+        sentences = await self.data_svc.build_sentences_for_export(report[0]['uid'])
 
         dd = dict()
         dd['content'] = []
@@ -140,13 +139,7 @@ class WebAPI:
             dd['content'].append(sentence['text'])
             if sentence['hits']:
                 for hit in sentence['hits']:
-                    # 'hits' object doesn't provide all the information we need, so we
-                    # do a makeshift join here to get that information from the attack_uid
-                    # list. This is ineffecient, and a way to improve this would be to perform
-                    # a join on the database side
-                    matching_attacks = [i for i in attack_uids if hit['attack_uid'] == i['uid']]
-                    for match in matching_attacks:
-                        table["body"].append([match["tid"], match["name"], sentence['text']])
+                    table["body"].append([hit["attack_tid"], hit["name"], sentence['text']])
 
         # Append table to the end
         dd['content'].append({"table": table})
