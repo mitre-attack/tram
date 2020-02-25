@@ -4,6 +4,8 @@ from starlette.templating import Jinja2Templates
 from starlette.requests import Request
 from service.handler import ServiceHandler
 
+import json
+
 handler = ServiceHandler()
 api_core = FastAPI(openapi_prefix="/")
 api_core.mount("/theme", StaticFiles(directory="webapp/theme"), name="static")
@@ -52,3 +54,42 @@ async def report_view(request: Request,title: str):
     final_html = await handler.web_svc.build_final_html(original_html, sentences)
     output = dict(request=request,file=title, title=title, sentences=sentences, attack_uids=attack_uids, original_html=original_html, final_html=final_html)
     return templates.TemplateResponse('columns.html',output)
+
+@api_core.post("/nav_export")
+async def nav_export(request: Request):
+    # Get the report from the database
+    report = await handler.dao.get('reports', dict(title=request.match_info.get('file')))
+    # Create the layer name and description
+    report_title = report[0]['title']
+    layer_name = f"{report_title}"
+    enterprise_layer_description = f"Enterprise techniques used by {report_title}, ATT&CK"
+    version = '1.0'
+    if (version): # add version number if it exists
+        enterprise_layer_description += f" v{version}"
+    # Enterprise navigator layer
+    enterprise_layer = {}
+    enterprise_layer['name'] = layer_name
+    enterprise_layer['description'] = enterprise_layer_description
+    enterprise_layer['domain'] = "mitre-enterprise"
+    enterprise_layer['version'] = "2.2"
+    enterprise_layer['techniques'] = []
+    enterprise_layer["gradient"] = { # white for nonused, blue for used
+        "colors": ["#ffffff", "#66b1ff"],
+        "minValue": 0,
+        "maxValue": 1
+    }
+    enterprise_layer['legendItems'] = [{
+        'label': f'used by {report_title}',
+        'color': "#66b1ff"
+    }]
+
+    # Get confirmed techniques for the report from the database
+    techniques = await handler.data_svc.get_confirmed_techniques(report[0]['uid'])
+
+    # Append techniques to enterprise layer
+    for technique in techniques:
+        enterprise_layer['techniques'].append(technique)
+        
+    # Return the layer JSON in the response
+    layer = json.dumps(enterprise_layer)
+    return layer
