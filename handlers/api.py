@@ -57,6 +57,11 @@ async def report_view(request: Request,title: str):
 
 @api_core.get("/export/nav/{title}")
 async def nav_export(request: Request,title: str):
+    """
+    Function to export confirmed sentences in layer json format
+    :param request: The title of the report information
+    :return: the layer json
+    """
     # Get the report from the database
     report = await handler.dao.get('reports', dict(title=title))
     # Create the layer name and description
@@ -93,3 +98,45 @@ async def nav_export(request: Request,title: str):
     # Return the layer JSON in the response
     layer = json.dumps(enterprise_layer)
     return layer
+
+@api_core.get("/export/pdf/{title}")
+async def export_pdf(request: Request,title: str):
+    """
+    Function to export report in PDF format
+    :param request: The title of the report information
+    :return: response status of function
+    """
+    # Get the report
+    report = await handler.dao.get('reports', dict(title=title))
+    sentences = await handler.data_svc.build_sentences(report[0]['uid'])
+    attack_uids = await handler.dao.get('attack_uids')
+
+    dd = dict()
+    dd['content'] = []
+    dd['styles'] = dict()
+
+    # Document MetaData Info
+    # See https://pdfmake.github.io/docs/document-definition-object/document-medatadata/
+    dd['info'] = dict()
+    dd['info']['title'] = report[0]['title']
+    dd['info']['creator'] = report[0]['url']
+
+    table = {"body": []}
+    table["body"].append(["ID", "Name", "Identified Sentence"])
+
+    # Add the text to the document
+    for sentence in sentences:
+        dd['content'].append(sentence['text'])
+        if sentence['hits']:
+            for hit in sentence['hits']:
+                # 'hits' object doesn't provide all the information we need, so we
+                # do a makeshift join here to get that information from the attack_uid
+                # list. This is ineffecient, and a way to improve this would be to perform
+                # a join on the database side
+                matching_attacks = [i for i in attack_uids if hit['attack_uid'] == i['uid']]
+                for match in matching_attacks:
+                    table["body"].append([match["tid"], match["name"], sentence['text']])
+
+    # Append table to the end
+    dd['content'].append({"table": table})
+    return dd
