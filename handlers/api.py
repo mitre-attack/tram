@@ -55,10 +55,10 @@ async def report_view(request: Request,title: str):
     output = dict(request=request,file=title, title=title, sentences=sentences, attack_uids=attack_uids, original_html=original_html, final_html=final_html)
     return templates.TemplateResponse('columns.html',output)
 
-@api_core.post("/nav_export")
-async def nav_export(request: Request):
+@api_core.get("/export/nav/{title}")
+async def nav_export(request: Request,title: str):
     # Get the report from the database
-    report = await handler.dao.get('reports', dict(title=request.match_info.get('file')))
+    report = await handler.dao.get('reports', dict(title=title))
     # Create the layer name and description
     report_title = report[0]['title']
     layer_name = f"{report_title}"
