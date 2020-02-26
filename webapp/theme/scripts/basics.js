@@ -14,7 +14,7 @@ function restRequest(type, data, callback) {
 
 function remove_sentences(){
     var sentence_id =  document.getElementById("sentence_id").value;
-    restRequest('POST', {'index':'remove_sentences', 'sentence_id':sentence_id}, show_info);
+    restRequest('DELETE', {'index':'remove_sentences', 'sentence_id':sentence_id}, show_info);
 }
 
 function true_positive(type, id, attack_uid, element_tag){
@@ -37,7 +37,7 @@ function false_negative_update(data){
 
 function deleteReport(report_id){
   if (confirm('Are you sure you want to delete this report?')) {
-    restRequest('POST', {'index':'delete_report', 'report_id':report_id}, show_info)
+    restRequest('DELETE', {'index':'delete_report', 'report_id':report_id}, show_info)
     window.location.reload(true);
   } else {}
 
@@ -49,7 +49,7 @@ function false_negative(type, attack_uid){
 }
 
 function set_status(set_status, file_name){
-    restRequest('POST', {'index':'set_status', 'set_status':set_status, 'file_name':file_name}, show_info);
+    restRequest('PUT', {'index':'set_status', 'set_status':set_status, 'file_name':file_name}, show_info);
 }
 
 function submit_report(){
@@ -193,7 +193,7 @@ $(window).resize(function() {
 
 function addMissingTechnique(){
     uid = $("#missingTechniqueSelect :selected").val();
-    restRequest('POST', {'index':'missing_technique', 'sentence_id': sentence_id, 'attack_uid':uid, 'element_tag':element_clicked_tag}, show_info);
+    restRequest('PUT', {'index':'missing_technique', 'sentence_id': sentence_id, 'attack_uid':uid, 'element_tag':element_clicked_tag}, show_info);
     restRequest('POST', {'index':'confirmed_sentences', 'sentence_id': sentence_id, 'element_tag':element_clicked_tag}, updateConfirmedContext);
 }
 

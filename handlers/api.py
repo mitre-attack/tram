@@ -21,29 +21,52 @@ async def root(request: Request):
     index['completed'] = await handler.data_svc.status_grouper("completed")
     return templates.TemplateResponse("index.html", index)
 
+
 @api_core.get("/about")
 async def about(request: Request):
-    return templates.TemplateResponse("about.html",{"request":request})
+    return templates.TemplateResponse("about.html", {"request": request})
+
 
 @api_core.post("/rest")
-async def report_submit(request: Request):
+async def rest_api_post(request: Request):
     data = dict(await request.json())
     index = data.pop('index')
     options = dict(
         false_positive=lambda d: handler.rest_svc.false_positive(criteria=d),
         true_positive=lambda d: handler.rest_svc.true_positive(criteria=d),
         false_negative=lambda d: handler.rest_svc.false_negative(criteria=d),
-        set_status=lambda d: handler.rest_svc.set_status(criteria=d),
         insert_report=lambda d: handler.rest_svc.insert_report(criteria=d),
         insert_csv=lambda d: handler.rest_svc.insert_csv(criteria=d),
-        remove_sentences=lambda d: handler.rest_svc.remove_sentences(criteria=d),
-        delete_report=lambda d: handler.rest_svc.delete_report(criteria=d),
         sentence_context=lambda d: handler.rest_svc.sentence_context(criteria=d),
         confirmed_sentences=lambda d: handler.rest_svc.confirmed_sentences(criteria=d),
-        missing_technique=lambda d: handler.rest_svc.missing_technique(criteria=d)
     )
     result = await options[index](data)
     return result
+
+
+@api_core.put("/rest")
+async def report_submit_put(request: Request):
+    data = dict(await request.json())
+    index = data.pop('index')
+    options = dict(
+        set_status=lambda d: handler.rest_svc.set_status(criteria=d),
+        missing_technique=lambda d: handler.rest_svc.missing_technique(criteria=d),
+    )
+    result = await options[index](data)
+    return result
+
+
+@api_core.delete("/rest")
+async def rest_api_delete(request: Request):
+    data = dict(await request.json())
+    index = data.pop('index')
+    options = dict(
+        delete_report=lambda d: handler.rest_svc.delete_report(criteria=d),
+        remove_sentences=lambda d: handler.rest_svc.remove_sentences(criteria=d),
+    )
+    result = await options[index](data)
+    return result
+
 
 @api_core.get("/edit/{title}")
 async def report_view(request: Request,title: str):
@@ -55,11 +78,13 @@ async def report_view(request: Request,title: str):
     output = dict(request=request,file=title, title=title, sentences=sentences, attack_uids=attack_uids, original_html=original_html, final_html=final_html)
     return templates.TemplateResponse('columns.html',output)
 
+
 @api_core.get("/export/nav/{title}")
-async def nav_export(request: Request,title: str):
+async def nav_export(request: Request, title: str):
     """
     Function to export confirmed sentences in layer json format
-    :param request: The title of the report information
+    :param request: THe request being sent to the server
+    :param title: the title of the report
     :return: the layer json
     """
     # Get the report from the database
@@ -72,8 +97,7 @@ async def nav_export(request: Request,title: str):
     if (version): # add version number if it exists
         enterprise_layer_description += f" v{version}"
     # Enterprise navigator layer
-    enterprise_layer = {}
-    enterprise_layer['name'] = layer_name
+    enterprise_layer = dict(name= layer_name)
     enterprise_layer['description'] = enterprise_layer_description
     enterprise_layer['domain'] = "mitre-enterprise"
     enterprise_layer['version'] = "2.2"
@@ -98,6 +122,7 @@ async def nav_export(request: Request,title: str):
     # Return the layer JSON in the response
     layer = json.dumps(enterprise_layer)
     return layer
+
 
 @api_core.get("/export/pdf/{title}")
 async def export_pdf(request: Request,title: str):
