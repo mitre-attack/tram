@@ -14,8 +14,11 @@ from service.web_svc import WebService
 from service.reg_svc import RegService
 from service.ml_svc import MLService
 from service.rest_svc import RestService
+from service.retrain_svc import RetrainingService
 
 from database.dao import Dao
+
+import multiprocessing as mp
 
 
 @asyncio.coroutine
@@ -69,7 +72,7 @@ async def init(host, port):
     await web.TCPSite(runner, host, port).start()
 
 
-def main(host, port, taxii_local=False, build=False, json_file=None):
+def main(host, port, retrain_svc, taxii_local=False, build=False, json_file=None):
     """
     Main function to start app
     :param host: Address to reach webserver on
@@ -78,11 +81,14 @@ def main(host, port, taxii_local=False, build=False, json_file=None):
     :param json_file: Expects a path to the enterprise attack json if the 'offline' build method is called.
     :return: nil
     """
+    pool = mp.Process(target=retrain_svc.handler,daemon=True)
+
     loop = asyncio.get_event_loop()
     loop.create_task(background_tasks(taxii_local=taxii_local, build=build, json_file=json_file))
     loop.create_task(ml_svc.check_nltk_packs())
     loop.run_until_complete(init(host, port))
     try:
+        pool.start()
         loop.run_forever()
     except KeyboardInterrupt:
         pass
@@ -113,7 +119,8 @@ if __name__ == '__main__':
     data_svc = DataService(dao=dao, web_svc=web_svc)
     ml_svc = MLService(web_svc=web_svc, dao=dao)
     rest_svc = RestService(web_svc, reg_svc, data_svc, ml_svc, dao)
-    services = dict(dao=dao, data_svc=data_svc, ml_svc=ml_svc, reg_svc=reg_svc, web_svc=web_svc, rest_svc=rest_svc)
+    retrain_svc = RetrainingService(dao=dao)
+    services = dict(dao=dao, data_svc=data_svc, ml_svc=ml_svc, reg_svc=reg_svc, web_svc=web_svc, rest_svc=rest_svc,retrain_svc=retrain_svc)
     website_handler = WebAPI(services=services)
-    main(host, port, taxii_local=taxii_local, build=build, json_file=attack_dict)
+    main(host, port, retrain_svc, taxii_local=taxii_local, build=build, json_file=attack_dict)
 

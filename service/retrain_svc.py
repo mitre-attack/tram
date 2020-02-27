@@ -7,7 +7,9 @@ import redis
 import pickle
 import hashlib
 import logging
+import asyncio
 
+import time
 
 '''
 Retraining service:
@@ -23,7 +25,7 @@ class RetrainingService:
         self.redis_port = 6379
         self.dao = dao
 
-    async def save_current_model(self,models):
+    def save_current_model(self,models):
         '''
         description: loads models dictionary into redis
         input: dictionary of scikit-learn LogisticRegression models with attack_uid as keys
@@ -36,7 +38,7 @@ class RetrainingService:
         r.set("model",model_dump)
         r.set("model_hash",model_hash)
 
-    async def modify_training_dict(self,training_dict,in_data,dict_key,in_key):
+    def modify_training_dict(self,training_dict,in_data,dict_key,in_key):
         '''
         description: Creates the training data dictionary
         input: training data dictionary, data to put in dictionary, training dictionary key, input data key
@@ -52,28 +54,29 @@ class RetrainingService:
                 training_dict[t_uid][dict_key].append(t[in_key])
         return training_dict
 
-    async def get_training_data(self): # gets and assembles a dictionary of training data from the database
+    def get_training_data(self): # gets and assembles a dictionary of training data from the database
         '''
         description: Gets training data from database, and outputs a dictionary of scema {'attack_uid':{'accuracy_type' (fp, tp, ...)}}
         input: nil
         output: dictionary of dictionaries
         '''
         logging.info("retrain_svc: Getting data from sql")
-        true_positives = await self.dao.get('true_positives') # Grab all training data from database
-        false_positives = await self.dao.get('false_positives')
-        false_negatives = await self.dao.get('false_negatives')
-        true_negatives = await self.dao.get('true_negatives')
+        loop = asyncio.get_event_loop()
+        true_positives = loop.run_until_complete(self.dao.get('true_positives')) # Grab all training data from database
+        false_positives = loop.run_until_complete(self.dao.get('false_positives'))
+        false_negatives = loop.run_until_complete(self.dao.get('false_negatives'))
+        true_negatives = loop.run_until_complete(self.dao.get('true_negatives'))
         training_data = {}
 
         logging.info("retrain_svc: Creating training dict")
-        training_data = await self.modify_training_dict(training_data,true_positives,'tp','true_positive') # Assemble dictionary for training data
-        training_data = await self.modify_training_dict(training_data,false_positives,'fp','false_positive')
-        training_data = await self.modify_training_dict(training_data,false_negatives,'fn','false_negative')
-        training_data = await self.modify_training_dict(training_data,true_negatives,'tn','sentence')
+        training_data = self.modify_training_dict(training_data,true_positives,'tp','true_positive') # Assemble dictionary for training data
+        training_data = self.modify_training_dict(training_data,false_positives,'fp','false_positive')
+        training_data = self.modify_training_dict(training_data,false_negatives,'fn','false_negative')
+        training_data = self.modify_training_dict(training_data,true_negatives,'tn','sentence')
 
         return training_data
 
-    async def fill_arrays(self,i,X,y,key):
+    def fill_arrays(self,i,X,y,key):
         '''
         description: helper function to fill training data arrays
         input: inner training dictionary data, X_data, y_data, inner dictionary key
@@ -90,7 +93,7 @@ class RetrainingService:
             _=0
         return X,y
 
-    async def create_negative_training_set(self,training_dict,num_pos_examples,current_num_neg,key):
+    def create_negative_training_set(self,training_dict,num_pos_examples,current_num_neg,key):
         '''
         description: Creates a set of training data containing only negative training examples
         input: training data, number of positive examples in training data for key, current number of negative
@@ -132,7 +135,7 @@ class RetrainingService:
         #falses = [False*len(negative_examples)]
         return negative_examples
 
-    async def train_on_data(self,training_dict):
+    def train_on_data(self,training_dict):
         '''
         description: method to train the boosted logistic regression models
         input: training data
@@ -147,15 +150,15 @@ class RetrainingService:
             y_data = []
             i = training_dict[j]
             
-            X_data,y_data = await self.fill_arrays(i,X_data,y_data,'tp')
-            X_data,y_data = await self.fill_arrays(i,X_data,y_data,'fn')
-            X_data,y_data = await self.fill_arrays(i,X_data,y_data,'fp')
-            X_data,y_data = await self.fill_arrays(i,X_data,y_data,'tn')
+            X_data,y_data = self.fill_arrays(i,X_data,y_data,'tp')
+            X_data,y_data = self.fill_arrays(i,X_data,y_data,'fn')
+            X_data,y_data = self.fill_arrays(i,X_data,y_data,'fp')
+            X_data,y_data = self.fill_arrays(i,X_data,y_data,'tn')
 
             len_pos = len([i for i in y_data if i == True])
             len_neg = len(y_data) - len_pos
 
-            negative_values = await self.create_negative_training_set(training_dict,len_pos,len_neg,j)
+            negative_values = self.create_negative_training_set(training_dict,len_pos,len_neg,j)
             for i in negative_values:
                 X_data.append(i)
                 y_data.append(False)
@@ -175,13 +178,22 @@ class RetrainingService:
                     models[j] = (word_counts,clf)
         return models
 
-    async def train(self): 
+    def train(self): 
         '''
         description: "main" function, all other functions are initiated and run out of here
         input: nil
         output: nil
         '''
-        raw_data = await self.get_training_data()
-        models = await self.train_on_data(raw_data)
-        await self.save_current_model(models)
-        logging.info("retrain_svc: Retraining task finished")
+        while(True):
+            print(time.localtime(time.time()))
+            time_check = time.localtime(time.time())
+            if(time_check[3] == 12 and time_check[4] == 0): # kick off training at noon and midnight
+                raw_data = self.get_training_data()
+                models = self.train_on_data(raw_data)
+                self.save_current_model(models)
+                logging.info("retrain_svc: Retraining task finished")
+            else:
+                time.sleep(10)
+
+    def handler(self):
+        self.train()
