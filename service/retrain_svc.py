@@ -185,7 +185,6 @@ class RetrainingService:
         output: nil
         '''
         while(True):
-            print(time.localtime(time.time()))
             time_check = time.localtime(time.time())
             if(time_check[3] == 12 and time_check[4] == 0): # kick off training at noon and midnight
                 raw_data = self.get_training_data()
