@@ -123,7 +123,7 @@ class WebAPI:
 
         dd = dict()
         dd['content'] = []
-        dd['styles'] = dict()
+        dd['styles'] = {"color":"ffc107"}
 
         # Document MetaData Info
         # See https://pdfmake.github.io/docs/document-definition-object/document-medatadata/
@@ -132,11 +132,15 @@ class WebAPI:
         dd['info']['creator'] = report[0]['url']
 
         table = {"body": []}
-        table["body"].append(["ID", "Name", "Identified Sentence"])
+        table["body"].append(["ID", "Name", "Identified Sentence", "Confirmed"])
 
         # Add the text to the document
         for sentence in sentences:
-            dd['content'].append(sentence['text'])
+            if sentence['found_status'] == "true":
+                text = {"text": sentence['text'], "style": "color"}
+            else:
+                text = {"text": sentence['text']}
+            dd['content'].append(text)
             if sentence['hits']:
                 for hit in sentence['hits']:
                     table["body"].append([hit["attack_tid"], hit["name"], sentence['text']])
