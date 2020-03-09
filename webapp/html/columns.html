@@ -36,6 +36,7 @@
         <button class="btn btn-md btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Export to...</button>
         <div class="dropdown-menu" id="dropdownMenu" aria-labelledby="dropdownMenuButton">
             <a class="dropdown-item" onclick="$.getJSON('/export/pdf/{{file}}', (x) => {pdfMake.createPdf(x).download(x['info']['title']);})">Export to PDF</a>
+            <a class="dropdown-item" onclick="$.getJSON('/export/word/{{file}}', (x) => {exportToWord(x);})">Export to Word</a>
             <a class="dropdown-item" onclick="$.getJSON('/export/nav/{{file}}', (x) => {downloadJSON(x);})">Export to JSON</a>
 <!--            <a class="dropdown-item" onclick="$.getJSON('/export/nav/{{file}}', (x) => {viewJSON(x);})">Export to Navigator</a>-->
         </div>

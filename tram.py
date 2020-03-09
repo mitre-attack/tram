@@ -59,6 +59,8 @@ async def init(host, port):
     app.router.add_route('GET', '/about', website_handler.about)
     app.router.add_route('*', '/rest', website_handler.rest_api)
     app.router.add_route('GET', '/export/pdf/{file}', website_handler.pdf_export)
+    app.router.add_route('GET', '/export/word/{file}', website_handler.word_export)
+    app.router.add_route('*', '/export/word/doc', website_handler.export_to_word)
     app.router.add_route('GET', '/export/nav/{file}', website_handler.nav_export)
     app.router.add_static('/theme/', 'webapp/theme/')
 

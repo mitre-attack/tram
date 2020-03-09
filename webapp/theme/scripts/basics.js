@@ -143,6 +143,46 @@ function updateConfirmedContext(data){
     })
 }
 
+function exportToWord(data){
+    // Create the file name of the Word document
+    var filename = data['info']['title'] + '.docx'
+    // A jquery ajax POST request is needed to call the python server method
+    // to build the Word document object and to receive the binary data for the download 
+    // This separate ajax POST request is required because the server method
+    // returns binary data not JSON data
+    $.ajax({
+        url: '/export/word/doc',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        xhrFields: {responseType: 'blob'},
+        success:function(blob) { 
+            // Call the method that will download the binary data 
+            // to the Word document with the specified file name
+            downloadWord(filename, blob); 
+        },
+        error: function (xhr, ajaxOptions, thrownError) { console.log(thrownError); }
+    });
+}
+
+function downloadWord(filename, blob){
+    // Encode data as a uri component
+    var downloadUrl = window.URL.createObjectURL(blob);
+    // Create temporary DOM element with attribute values needed to perform the download
+    var a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = filename;
+    a.innerHTML = 'download Word';
+    // Add the temporary element to the DOM
+    var container = document.getElementById('dropdownMenu');
+    container.appendChild(a);
+    // Download the JSON document
+    a.click();
+    // Remove the temporary element from the DOM
+    a.remove();
+    URL.revokeObjectURL(downloadUrl);
+}
+
 function downloadJSON(data){
   // Create the name of the JSON download file from the name of the report
   var json = JSON.parse(data) 
