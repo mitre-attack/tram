@@ -101,8 +101,8 @@ if __name__ == '__main__':
         taxii_local = config['taxii-local']
         json_file = os.path.join('models', config['json_file'])
         attack_dict = None
+
         if conf_build:
-            build = True
             if taxii_local == 'local-json' and bool(os.path.isfile(json_file)):
                 logging.debug("Will build model from static file")
                 attack_dict = os.path.abspath(json_file)
@@ -115,5 +115,5 @@ if __name__ == '__main__':
     rest_svc = RestService(web_svc, reg_svc, data_svc, ml_svc, dao)
     services = dict(dao=dao, data_svc=data_svc, ml_svc=ml_svc, reg_svc=reg_svc, web_svc=web_svc, rest_svc=rest_svc)
     website_handler = WebAPI(services=services)
-    main(host, port, taxii_local=taxii_local, build=build, json_file=attack_dict)
+    main(host, port, taxii_local=taxii_local, build=conf_build, json_file=attack_dict)
 
