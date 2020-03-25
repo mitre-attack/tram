@@ -62,8 +62,16 @@ function submit_report(){
     }    
 }
 
-function upload_file(){
-  //var fileName = this.val().split("\\").pop();
+function upload_word_file(){
+
+  console.log(document.getElementById("word_file"))
+  var file = document.getElementById("word_file").files[0];
+  if(file){
+    // Add functionality to injest word document
+  }
+}
+
+function upload_csv_file(){
 
   console.log(document.getElementById("csv_file"))
   var file = document.getElementById("csv_file").files[0];

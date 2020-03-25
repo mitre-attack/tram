@@ -14,7 +14,7 @@
                 <div class="tab-content">
                     <div id="home" class="tab-pane fade in active show">
                         <div class="card-body divOperationalFlow-tacticsummary">
-                          <form>
+                            <form>
                                 <div class="form-group">
                                     <label for="url">Insert URL</label>
                                     <input type="url" class="form-control" id="url" placeholder="Enter URL(s) (comma seperated)">
@@ -25,19 +25,31 @@
                                 </div>
                                 <button type="submit" onclick='submit_report()' class="btn btn-primary">Submit</button>
                             </form>
-                      </div>
-                        <hr>
-                      <form class="md-form">
-                        <div class="file-field">
-                          <a class="btn-floating peach-gradient mt-0 float-left">
-                            <i class="fas fa-paperclip" aria-hidden="true"></i>
-                            <input style="margin-bottom: 15px" type="file" id="csv_file">
-                          </a>
-                          <div class="file-path-wrapper">
-                            <button type="submit" onclick="upload_file()" class="btn btn-primary">Upload csv file</button>
-                          </div>
+                            <hr>
+                            <form class="md-form">
+                                <div class="file-field">
+                                    <a class="btn-floating peach-gradient mt-0 float-left">
+                                        <i class="fas fa-paperclip" aria-hidden="true"></i>
+                                        <input style="margin-bottom: 15px" type="file" id="word_file">
+                                    </a>
+                                    <div class="file-path-wrapper">
+                                        <button type="submit" onclick="upload_word_file()" class="btn btn-primary">Upload Word file</button>
+                                    </div>
+                                </div>
+                            </form>
+                            <hr>
+                            <form class="md-form">
+                                <div class="file-field">
+                                    <a class="btn-floating peach-gradient mt-0 float-left">
+                                        <i class="fas fa-paperclip" aria-hidden="true"></i>
+                                        <input style="margin-bottom: 15px" type="file" id="csv_file">
+                                    </a>
+                                    <div class="file-path-wrapper">
+                                        <button type="submit" onclick="upload_csv_file()" class="btn btn-primary">Upload csv file</button>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
-                      </form>
                     </div>
                     <br>
                     <hr>
