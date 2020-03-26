@@ -1,7 +1,12 @@
-import pandas as pd
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
+#from sklearn.linear_model import LogisticRegression
+from skmultlearn.problem_transform import ClassifierChain
+from sklearn.naive_bayes import GaussianNB
+from sklearn.preprocessing import MultiLabelBinarizer
+
+import spacy
+import pandas as pd
 import numpy as np
 import redis
 import pickle
@@ -135,13 +140,14 @@ class RetrainingService:
         #falses = [False*len(negative_examples)]
         return negative_examples
 
-    def train_on_data(self,training_dict):
+    def train_on_data(self,training_dict): # new training on data involves technique specific
         '''
         description: method to train the boosted logistic regression models
         input: training data
         output: dictionary of models (boosted classifier)
         '''
-        cv = CountVectorizer(max_features=50)
+        cv = CountVectorizer(max_features=500)
+        tft = TfidfTransformer()
 
         models = {}
         logging.info("retrain_svc: initiate training")
@@ -168,13 +174,15 @@ class RetrainingService:
             if(True in y_data and False in y_data):
                 X_train,X_test,y_train,y_test = train_test_split(np.array(X_data),np.array(y_data),test_size=0.1)
                 if(True in y_train and False in y_train):
-                    clf = LogisticRegression(max_iter=2500, solver='lbfgs')
+                    clf = ClassifierChain(GaussianNB()) #LogisticRegression(max_iter=2500, solver='lbfgs')
                     word_counts = cv.fit_transform(X_train)
+                    tfidf = tft.fit_transform(word_counts)
                     logging.info("retrain_svc: Fitting uid [{}] to model".format(j))
-                    clf.fit(word_counts,y_train)
+                    clf.fit(tfidf,y_train)
                     test_counts = cv.transform(X_test)
+                    test_tfidf = tft.transform(test_counts)
                     #clf.score(test_counts,y_test)
-                    print("retrain_svc: Accuracy on test set = {}".format(clf.score(test_counts,y_test)))
+                    print("retrain_svc: Accuracy on test set = {}".format(clf.score(test_tfidf,y_test)))
                     models[j] = (word_counts,clf)
         return models
 

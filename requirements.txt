@@ -41,3 +41,4 @@ tldextract==2.2.2
 urllib3==1.25.7
 yarl==1.4.2
 redis==3.4.1
+scikit-multilearn==0.2.0
