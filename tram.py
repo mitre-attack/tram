@@ -31,6 +31,10 @@ if __name__ == '__main__':
         taxii_local = config['taxii-local']
         json_file = os.path.join('models', config['json_file'])
         attack_dict = None
+        if(os.path.isfile('database/tram.db')):
+            build = False
+        else:
+            build = True
         if conf_build:
             build = True
             if taxii_local == 'local-json' and bool(os.path.isfile(json_file)):
