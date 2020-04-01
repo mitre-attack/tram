@@ -28,6 +28,9 @@ class RestService:
         return dict(status="Report status updated to " + criteria['set_status'])
 
     async def delete_report(self, criteria=None):
+        sentences = await self.dao.get('report_sentences', dict(report_uid=criteria['report_id']))
+        for sentence in sentences:
+            await self.remove_sentences(dict(sentence_id=sentence['uid']))
         await self.dao.delete('reports', dict(uid=criteria['report_id']))
         await self.dao.delete('report_sentences', dict(report_uid=criteria['report_id']))
         await self.dao.delete('report_sentence_hits', dict(report_uid=criteria['report_id']))
@@ -40,12 +43,12 @@ class RestService:
             false_positives = await self.dao.get('false_positives', dict(sentence_id=criteria['sentence_id']))
             false_negatives = await self.dao.get('false_negatives', dict(sentence_id=criteria['sentence_id']))
         if not true_positives and not false_positives and not false_negatives:
-            return dict(status="There is no entry for sentence id " + criteria['sentence_id'])
+            return dict(status="There is no entry for sentence id " + str(criteria['sentence_id']))
         else:
             await self.dao.delete('true_positives', dict(sentence_id=criteria['sentence_id']))
             await self.dao.delete('false_positives', dict(sentence_id=criteria['sentence_id']))
             await self.dao.delete('false_negatives', dict(sentence_id=criteria['sentence_id']))
-            return dict(status='Successfully moved sentence ' + criteria['sentence_id'])
+            return dict(status='Successfully moved sentence ' + str(criteria['sentence_id']))
 
     async def sentence_context(self, criteria=None):
         if criteria['element_tag']=='img':
