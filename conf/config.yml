@@ -3,5 +3,4 @@
 host: 0.0.0.0
 port: 9999
 taxii-local: taxii-server
-build: False
 json_file: enterprise-attack.json
