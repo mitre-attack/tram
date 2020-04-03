@@ -13,7 +13,12 @@ class WebAPI:
         self.ml_svc = services['ml_svc']
         self.reg_svc = services['reg_svc']
         self.rest_svc = services['rest_svc']
-        self.tokenizer_sen = nltk.data.load('tokenizers/punkt/english.pickle')
+        try:
+            self.tokenizer_sen = nltk.data.load('tokenizers/punkt/english.pickle')
+        except LookupError:
+            logging.info('Downloading Punkt Tokenizer Models')
+            nltk.download('punkt')
+            self.tokenizer_sen = nltk.data.load('nltk:tokenizers/punkt/english.pickle')
 
     @template('about.html')
     async def about(self, request):
