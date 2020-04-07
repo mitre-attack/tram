@@ -1,7 +1,10 @@
 import json
 import asyncio
 from io import StringIO
+from io import BytesIO
 import pandas as pd
+from docx import Document
+import base64
 
 class RestService:
 
@@ -101,6 +104,25 @@ class RestService:
         asyncio.create_task(self.check_queue())
         await asyncio.sleep(0.01)
 
+    async def insert_word(self,criteria=None):
+        index = 0
+        for i in range(len(criteria['file'])):
+            if(criteria['file'][i:i+6] == 'base64'):
+                index = i+7
+                break
+        file = BytesIO(base64.b64decode(criteria['file'][index:]))
+        document = Document(file)
+        word_data = []
+        for p in document.paragraphs:
+            for run in p.runs:
+                word_data.append(run.text.strip())
+        temp_dict = dict(title=word_data[0],content=' '.join(word_data[1:]),current_status="queue")
+        #print(temp_dict)
+        temp_dict['id'] = await self.dao.insert('reports', temp_dict)
+        await self.queue.put(temp_dict)
+        asyncio.create_task(self.check_queue())
+        await asyncio.sleep(0.01)
+
     async def check_queue(self):
         '''
         description: executes as concurrent job, manages taking jobs off the queue and executing them.
@@ -156,10 +178,14 @@ class RestService:
                 techniques[row['uid']] = {'id': row['tid'], 'name': row['name'], 'similar_words': [],
                                           'example_uses': tp, 'false_positives': fp}
 
-        html_data = await self.web_svc.get_url(criteria['url'])
-        original_html = await self.web_svc.map_all_html(criteria['url'])
+        if('url' in criteria.keys()): # if its a url, scrape and convert to article text
+            html_data = await self.web_svc.get_url(criteria['url'])
+            original_html = await self.web_svc.map_all_html(criteria['url'])
+            article = dict(title=criteria['title'], html_text=html_data)
+        else:
+            # if its a word doc put content directly as html_text
+            article = dict(title=criteria['title'], html_text=criteria['content']) 
 
-        article = dict(title=criteria['title'], html_text=html_data)
         list_of_legacy, list_of_techs = await self.data_svc.ml_reg_split(json_tech)
 
         true_negatives = await self.ml_svc.get_true_negs()

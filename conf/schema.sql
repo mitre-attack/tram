@@ -47,6 +47,7 @@ CREATE TABLE if not exists reports (
     uid integer PRIMARY KEY AUTOINCREMENT,
     title TEXT,
     url TEXT,
+    content TEXT,
     attack_key TEXT,
     current_status TEXT
     );

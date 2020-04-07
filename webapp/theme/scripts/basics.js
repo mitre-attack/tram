@@ -67,7 +67,15 @@ function upload_word_file(){
   console.log(document.getElementById("word_file"))
   var file = document.getElementById("word_file").files[0];
   if(file){
-    // Add functionality to injest word document
+    var reader = new FileReader();
+    reader.readAsDataURL(file, "UTF-8");
+    reader.onload = function(evt){
+      console.log(evt.target.result)
+      restRequest('POST', {'index':'insert_word','file':evt.target.result},show_info);
+    }
+    reader.onerror = function(evt){
+      alert("Error reading file");
+    }
   }
 }
 
