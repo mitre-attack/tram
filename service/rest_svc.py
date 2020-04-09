@@ -118,10 +118,11 @@ class RestService:
                 word_data.append(run.text.strip())
         temp_dict = dict(title=word_data[0],content=' '.join(word_data[1:]),current_status="queue")
         #print(temp_dict)
+        #### JUST LOAD DATA INTO DATABASE FOR NOW ####
         temp_dict['id'] = await self.dao.insert('reports', temp_dict)
-        await self.queue.put(temp_dict)
-        asyncio.create_task(self.check_queue())
-        await asyncio.sleep(0.01)
+        #await self.queue.put(temp_dict) # code to do analysis (need to refactor to handle word data)
+        #asyncio.create_task(self.check_queue())
+        #await asyncio.sleep(0.01)
 
     async def check_queue(self):
         '''
@@ -191,6 +192,7 @@ class RestService:
         true_negatives = await self.ml_svc.get_true_negs()
         # Here we build the sentence dictionary
         html_sentences = await self.web_svc.tokenize_sentence(article['html_text'])
+        
         model_dict = await self.ml_svc.build_pickle_file(list_of_techs, json_tech, true_negatives)
 
         ml_analyzed_html = await self.ml_svc.analyze_html(list_of_techs, model_dict, html_sentences)
@@ -199,7 +201,6 @@ class RestService:
 
         # Merge ML and Reg hits
         analyzed_html = await self.ml_svc.combine_ml_reg(ml_analyzed_html, reg_analyzed_html)
-
         # update card to reflect the end of queue
         await self.dao.update('reports', 'title', criteria['title'], dict(current_status='needs_review'))
         temp = await self.dao.get('reports',dict(title=criteria['title']))
@@ -215,7 +216,8 @@ class RestService:
                 data = dict(report_uid=report_id, text=sentence['text'], html=sentence['html'], found_status="false")
                 await self.dao.insert('report_sentences', data)
 
-        for element in original_html:
+        for element in original_html: # PROBLEM WITH WORD INGEST, word docs don't have elements
+            print(element)
             html_element = dict(report_uid=report_id, text=element['text'], tag=element['tag'], found_status="false")
             await self.dao.insert('original_html', html_element)
 
