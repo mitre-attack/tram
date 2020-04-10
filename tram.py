@@ -18,7 +18,6 @@ from service.rest_svc import RestService
 from database.dao import Dao
 
 
-@asyncio.coroutine
 async def background_tasks(taxii_local='online', build=False, json_file=None):
     """
     Function to run background tasks at startup
@@ -42,7 +41,6 @@ async def background_tasks(taxii_local='online', build=False, json_file=None):
             await data_svc.insert_attack_json_data(json_file)
 
 
-@asyncio.coroutine
 async def init(host, port):
     """
     Function to initialize the aiohttp app
