@@ -60,7 +60,7 @@ class MLService:
         logreg = LogisticRegression(max_iter=2500, solver='lbfgs')
         logreg.fit(X_train, y_train)
 
-        print("{} - {}".format(tech_name, logreg.score(X_test, y_test)))
+        logging.info("{} - {}".format(tech_name, logreg.score(X_test, y_test)))
         return (cv, logreg)
 
     async def analyze_document(self, cv, logreg, sentences):
@@ -78,16 +78,16 @@ class MLService:
             model_dict = {}
             total = len(list_of_techs)
             count = 1
-            print(
+            logging.info(
                 "Building Classification Models.. This could take anywhere from ~30-60+ minutes. Please do not close terminal.")
             for i in list_of_techs:
-                print('[#] Building.... {}/{}'.format(count, total))
+                logging.info('Building.... {}/{}'.format(count, total))
                 count += 1
                 model_dict[i] = self.build_models(self, i, techniques)
-            print('[#] Saving models to pickled file: model_dict.p')
+            logging.info('Saving models to pickled file: model_dict.p')
             pickle.dump(model_dict, open('models/model_dict.p', 'wb'))
         else:
-            print('[#] Loading models from pickled file: model_dict.p')
+            logging.info('Loading models from pickled file: model_dict.p')
             model_dict = pickle.load(open('models/model_dict.p', 'rb'))
         return model_dict
 
@@ -137,13 +137,13 @@ class MLService:
     async def check_nltk_packs(self):
         try:
             nltk.data.find('tokenizers/punkt')
-            logging.info('[*] Found punkt')
+            logging.info('Found punkt pack')
         except LookupError:
             logging.warning('Could not find the punkt pack, downloading now')
             nltk.download('punkt')
         try:
             nltk.data.find('corpora/stopwords')
-            logging.info('[*] Found stopwords')
+            logging.info('Found stopwords pack')
         except LookupError:
             logging.warning('Could not find the stopwords pack, downloading now')
             nltk.download('stopwords')
