@@ -7,6 +7,7 @@ from nltk.stem import SnowballStemmer
 from html2text import html2text
 from bs4 import BeautifulSoup
 import asyncio
+import logging
 
 
 class WebService:
@@ -137,8 +138,10 @@ class WebService:
             print('[!] HTML support is being refactored. Currently data is being returned plaintext')
         r = requests.get(url)
         await asyncio.sleep(0.01)
-
-        b = newspaper.fulltext(r.text)
+        try:
+            b = newspaper.fulltext(r.text)
+        except Exception as e:
+            logging.warning("Error in newspaper module, no data downloaded. " + str(e))
         return str(b).replace('\n', '<br>') if b else None
 
     @staticmethod
