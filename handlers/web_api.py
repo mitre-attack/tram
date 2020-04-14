@@ -64,14 +64,15 @@ class WebAPI:
         attack_uids = await self.dao.get('attack_uids')
         original_html = await self.dao.get('original_html', dict(report_uid=report[0]['uid']))
         final_html = await self.web_svc.build_final_html(original_html, sentences)
-        return dict(file=request.match_info.get('file'), title=report[0]['title'], sentences=sentences, attack_uids=attack_uids, original_html=original_html, final_html=final_html)
+        return dict(file=request.match_info.get('file'), title=report[0]['title'], sentences=sentences,
+                    attack_uids=attack_uids, original_html=original_html, final_html=final_html)
 
     async def nav_export(self, request):
         """
         Function to export confirmed sentences in layer json format
         :param request: The title of the report information
         :return: the layer json
-        """        
+        """
         # Get the report from the database
         report = await self.dao.get('reports', dict(title=request.match_info.get('file')))
 
@@ -80,7 +81,7 @@ class WebAPI:
         layer_name = f"{report_title}"
         enterprise_layer_description = f"Enterprise techniques used by {report_title}, ATT&CK"
         version = '1.0'
-        if (version): # add version number if it exists
+        if version:  # add version number if it exists
             enterprise_layer_description += f" v{version}"
 
         # Enterprise navigator layer
@@ -90,11 +91,11 @@ class WebAPI:
         enterprise_layer['domain'] = "mitre-enterprise"
         enterprise_layer['version'] = "2.2"
         enterprise_layer['techniques'] = []
-        enterprise_layer["gradient"] = { # white for nonused, blue for used
-		    "colors": ["#ffffff", "#66b1ff"],
-		    "minValue": 0,
-    		"maxValue": 1
-	    }
+        enterprise_layer["gradient"] = {  # white for nonused, blue for used
+            "colors": ["#ffffff", "#66b1ff"],
+            "minValue": 0,
+            "maxValue": 1
+        }
         enterprise_layer['legendItems'] = [{
             'label': f'used by {report_title}',
             'color': "#66b1ff"
@@ -106,7 +107,7 @@ class WebAPI:
         # Append techniques to enterprise layer
         for technique in techniques:
             enterprise_layer['techniques'].append(technique)
-            
+
         # Return the layer JSON in the response
         layer = json.dumps(enterprise_layer)
         return web.json_response(layer)
@@ -192,5 +193,3 @@ class WebAPI:
         self.ml_svc.build_pickle_file(self, list_of_techs, techniques, true_negatives, force=True)
 
         return {'text': 'ML Rebuilt!'}
-
-
