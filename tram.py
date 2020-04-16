@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from service.handler import ServiceHandler
 from handlers.api import api_core
 
+from service.retrain_svc import RetrainingService
 app = FastAPI()
 
 

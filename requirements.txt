@@ -44,7 +44,10 @@ stix2-patterns==1.2.1
 taxii2-client==0.5.0
 tinysegmenter==0.3
 tldextract==2.2.2
-urllib3==1.25.8
+scikit-multilearn==0.2.0
+redis==3.4.1
 uvicorn==0.11.3
 uvloop==0.14.0
 websockets==8.1
+urllib3==1.25.8
+yarl==1.4.2
