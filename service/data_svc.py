@@ -38,6 +38,46 @@ class DataService:
         with open(schema) as schema:
             await self.dao.build((schema.read()))
 
+    async def insert_reports_data(self):
+        logging.info('Loading analyzed reports.')
+        with open("models/all_analyzed_reports.json",'r') as f:
+            annotations = json.loads(f.read())
+        labels = []
+        keys = list(annotations.keys())
+        sentances = []
+        for ann in annotations:
+            temp = []
+            if(ann[-6:] == "-multi"):
+                tech_names = annotations[ann]['technique_names']
+                for key in keys:
+                    if("-multi" in key):
+                        continue
+                    if(key in tech_names):
+                        temp.append(key)
+            else:
+                for key in keys:
+                    if("-multi" in key):
+                        continue
+                    if(key == ann):
+                        temp.append(key)
+            for i in annotations[ann]:
+                if(i == "technique_names" or i == "sentances"):
+                    for j in annotations[ann]['sentances']:
+                        sentances.append(j)
+                        labels.append(temp)
+                else:
+                    labels.append(temp)
+                    sentances.append(i)
+        uids = await self.dao.get('attack_uids')
+        logging.info("Inserting reports into database.")
+        for i in range(len(sentances)):
+            for j in labels[i]:
+                # convert name to uid here????
+                for k in uids:
+                    if(k['name'].lower() == j.lower()):
+                        uid = k['uid']
+                await self.dao.insert('true_positives',dict(uid=uid,true_positive=defang_text(sentances[i])))
+
     async def insert_attack_stix_data(self):
         """
         Function to pull stix/taxii information and insert in to the local db
