@@ -82,7 +82,7 @@ class DataService:
     async def insert_negative_data(self):
         logging.info("Loading negative examples.")
         with open("models/negative_data.json",'r') as f:
-            negs = json.load(f.read())
+            negs = json.loads(f.read())
         sentances = []
         for i in negs:
             sentances.append(i)
