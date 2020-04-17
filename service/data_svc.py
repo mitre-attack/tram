@@ -4,6 +4,7 @@ import logging
 from taxii2client import Collection
 from fastapi import BackgroundTasks
 from stix2 import TAXIICollectionSource, Filter
+from tqdm import tqdm
 
 
 background_tasks = BackgroundTasks
@@ -70,13 +71,26 @@ class DataService:
                     sentances.append(i)
         uids = await self.dao.get('attack_uids')
         logging.info("Inserting reports into database.")
-        for i in range(len(sentances)):
+        for i in tqdm(range(len(sentances))):
             for j in labels[i]:
                 # convert name to uid here????
                 for k in uids:
                     if(k['name'].lower() == j.lower()):
                         uid = k['uid']
                 await self.dao.insert('true_positives',dict(uid=uid,true_positive=defang_text(sentances[i])))
+
+    async def insert_negative_data(self):
+        logging.info("Loading negative examples.")
+        with open("models/negative_data.json",'r') as f:
+            negs = json.load(f.read())
+        sentances = []
+        for i in negs:
+            sentances.append(i)
+        for i in range(25): # force model to see any blanks as nothing, just in case errors happen
+            sentances.append("")
+        logging.info("Inserting negative examples into database.")
+        for i in tqdm(range(len(sentances))):
+            await self.dao.insert('true_negatives',dict(uid="NO_TECHNIQUE",sentence=i))
 
     async def insert_attack_stix_data(self):
         """
@@ -136,7 +150,7 @@ class DataService:
 
         cur_uids = await self.dao.get('attack_uids') if await self.dao.get('attack_uids') else []
         cur_items = [i['uid'] for i in cur_uids]
-        for k, v in attack_data.items():
+        for k, v in tqdm(attack_data.items()):
             if k not in cur_items:
                 await self.dao.insert('attack_uids', dict(uid=k, description=defang_text(v['description']), tid=v['id'],
                                                           name=v['name']))

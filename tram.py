@@ -26,10 +26,12 @@ async def startup_event():
             await handler.data_svc.reload_database()
             await handler.data_svc.insert_attack_json_data(attack_dict)
             await handler.data_svc.insert_reports_data()
+            await handler.data_svc.insert_negative_data()
         else:
             await handler.data_svc.reload_database()
             await handler.data_svc.insert_attack_stix_data()
             await handler.data_svc.insert_reports_data()
+            await handler.data_svc.insert_negative_data()
 
 
 def main(host, port, taxii_local=False, build=False, json_file=None):
