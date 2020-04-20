@@ -15,10 +15,19 @@ app = FastAPI()
 
 @app.on_event("startup")
 async def startup_event():
-    if(os.path.isfile('./database/tram.db')):
-        build = False
-    else:
+    try:
+        f = open("./database/tram.db",encoding='latin')
+        # Do something with the file
+        if(f.read(1) == ''):
+            build = True
+        else:
+            build = False
+    except FileNotFoundError:
+        print("Database not built")
         build = True
+    finally:
+        f.close()
+
     if(build):
         if taxii_local == 'local-json' and bool(os.path.isfile(json_file)):
             logging.debug("Will build model from static file")

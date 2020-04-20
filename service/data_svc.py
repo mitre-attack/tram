@@ -72,14 +72,15 @@ class DataService:
         uids = await self.dao.get('attack_uids')
         logging.info("Inserting reports into database.")
         for i in tqdm(range(len(sentances))):
-            j = labels[0]
+            if(len(labels[i]) == 0):
+                labels[i] = ['NO_TECHNIQUE']
+            j = labels[i][0]
             for k in uids:
-                print(k['name'].lower())
                 name = k['name']
                 if(name.lower() == j.lower()):
                     uid = k['uid']
                     break
-            await self.dao.insert('true_positives',dict(uid=uid,true_positive=defang_text(sentances[i]),labels='_'.join(labels)))
+            await self.dao.insert('true_positives',dict(uid=uid,true_positive=defang_text(sentances[i]),labels='_'.join(labels[i])))
 
     async def insert_negative_data(self):
         logging.info("Loading negative examples.")
