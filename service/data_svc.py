@@ -72,12 +72,12 @@ class DataService:
         uids = await self.dao.get('attack_uids')
         logging.info("Inserting reports into database.")
         for i in tqdm(range(len(sentances))):
-            for j in labels[i]:
-                # convert name to uid here????
-                for k in uids:
-                    if(k['name'].lower() == j.lower()):
-                        uid = k['uid']
-                await self.dao.insert('true_positives',dict(uid=uid,true_positive=defang_text(sentances[i])))
+            j = labels[0]
+            for k in uids:
+                if(k['name'].lower() == j.lower()):
+                    uid = k['uid']
+                    break
+            await self.dao.insert('true_positives',dict(uid=uid,true_positive=defang_text(sentances[i]),labels=' '.join(labels)))
 
     async def insert_negative_data(self):
         logging.info("Loading negative examples.")
@@ -161,16 +161,16 @@ class DataService:
                     [await self.dao.insert('similar_words', dict(uid=k, similar_word=defang_text(x))) for x in
                      v['similar_words']]
                 if 'false_negatives' in v:
-                    [await self.dao.insert('false_negatives', dict(uid=k, false_negative=defang_text(x))) for x in
+                    [await self.dao.insert('false_negatives', dict(uid=k, false_negative=defang_text(x),labels=v['name'])) for x in
                      v['false_negatives']]
                 if 'false_positives' in v:
-                    [await self.dao.insert('false_positives', dict(uid=k, false_positive=defang_text(x))) for x in
+                    [await self.dao.insert('false_positives', dict(uid=k, false_positive=defang_text(x),labels=v['name'])) for x in
                      v['false_positives']]
                 if 'true_positives' in v:
-                    [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x))) for x in
+                    [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x),labels=v['name'])) for x in
                      v['true_positives']]
                 if 'example_uses' in v:
-                    [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x))) for x in
+                    [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x),labels=v['name'])) for x in
                      v['example_uses']]
         logging.info('[!] DB Item Count: {}'.format(len(await self.dao.get('attack_uids'))))
 
@@ -226,7 +226,7 @@ class DataService:
             await self.dao.insert('attack_uids', dict(uid=k, description=defang_text(v['description']), tid=v['id'],
                                                       name=v['name']))
             if 'example_uses' in v:
-                [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x))) for x in
+                [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x),labels=[v['name']])) for x in
                  v['example_uses']]
 
     async def status_grouper(self, status):
