@@ -83,27 +83,36 @@ class BaseModel:
 
     def extract_y(self):
         binarizer = MultiLabelBinarizer()
-        y = binarizer.fit_transform(self.y.split("_")) # split y by each technique as it was inserted into the database
+        new_y = []
+        for i in self.y:
+            if(i == "NO_TECHNIQUE"):
+                new_y.append([i])
+            else:
+                new_y.append(i.split("_"))
+        self.y = binarizer.fit_transform(new_y) # split y by each technique as it was inserted into the database
         self.classes = binarizer.classes_ # get fitted classes
 
         # construct the output graph to identify relationships between classes
-        nodes,edges,weights = self.create_graph_matricies(y,self.classes)
+        nodes,edges,weights = self.create_graph_matricies(self.y,self.classes)
         nx_graph = nx.Graph()
         nx_graph.add_nodes_from(nodes)
         nx_graph.add_edges_from(edges)
 
         # fit node2vec, get dimension reduced embeddings
-        n2v = Node2Vec(nx_graph,dimensions=32,walk_length=30,num_walks=300,workers=12)
-        self.n2v = n2v.fit(window=10, min_count=1, batch_words=8)
+        self.n2v = Node2Vec(nx_graph,dimensions=32,walk_length=30,num_walks=300,workers=12)
+        self.n2v.fit(window=10, min_count=1, batch_words=8)
 
     def train(self,X,y):
         self.X = X
         self.y = y
+        self.extract_X()
+        self.extract_y()
         # encode y to embeddings then train
-        new_y = self.embedding_encode(y,self.model)
+        new_y = self.embedding_encode(y,self.n2v)
         self.rnc = self.train_embedder(new_y,y)
         X_train = self.X.toarray()
         self.model = lm.LinearRegression(n_jobs=-1)
+        logging.info("base_model: fitting regression model")
         self.model.fit(X_train,new_y)
         logging.info("base_model: regression model fit")
         logging.info("base_model: testing model...")

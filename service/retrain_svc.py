@@ -16,6 +16,8 @@ import asyncio
 
 import time
 
+from models.base_model import BaseModel
+
 '''
 Retraining service:
 retrains the model off of current data, then saves model to redis store
@@ -49,7 +51,7 @@ class RetrainingService:
         input: input data, output sentances, output labels, key for input data
         output: X sentances, y labels
         '''
-        if(key != 'sentance'):
+        if(key != 'sentence'):
             for t in in_data:
                 labels.append(t['labels'])
                 sentances.append(t[key])
@@ -85,23 +87,24 @@ class RetrainingService:
 
         return training_sents,training_labels
 
-    def train_model(self,training_data,model={'file':'base_model','class':None}):
+    def train_model(self,training_data):
         '''
         description: method to handle training models loaded from the models directory
         input: tuple of training data in form (X,y)
         output: model object
         '''
         X,y = training_data
-        if(model['file'] == 'base_model'):
-            from models.base_model import BaseModel
-        
+        model = BaseModel()
+        model.train(X,y)
+        return model
 
+    '''
     def train_on_data(self,training_dict): # new training on data involves technique specific
-        '''
-        description: method to train the boosted logistic regression models
-        input: training data
-        output: dictionary of models (boosted classifier)
-        '''
+        
+        #description: method to train the boosted logistic regression models
+        #input: training data
+        #output: dictionary of models (boosted classifier)
+        
         cv = CountVectorizer(max_features=2500)
         tft = TfidfTransformer()
 
@@ -131,6 +134,7 @@ class RetrainingService:
                     print("retrain_svc: Accuracy on test set = {}".format(clf.score(test_tfidf,y_test)))
                     models[j] = (word_counts,clf)
         return models
+        '''
 
     def train(self): 
         '''
@@ -143,7 +147,7 @@ class RetrainingService:
             #if(time_check[3] == 12 and time_check[4] == 0): # kick off training at noon and midnight
             raw_data = self.get_training_data()
             #print(raw_data)
-            models = self.train_on_data(raw_data)
+            models = self.train_model(raw_data) #self.train_on_data(raw_data)
             self.save_current_model(models)
             logging.info("retrain_svc: Retraining task finished")
             #else:
