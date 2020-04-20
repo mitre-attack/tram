@@ -13,9 +13,13 @@ from tqdm import tqdm
 import logging
 
 class BaseModel:
-    def __init__(self,X,y):
-        self.X = X
-        self.y = y
+    def __init__(self):
+        self.X = None
+        self.y = None
+        self.model = None# lm.LinearRegression(n_jobs=-1)
+        self.rnc = None
+        self.n2v = None
+        self.classes = None
 
     def create_graph_matricies(self,y,classes):
         nodes = []
@@ -80,29 +84,44 @@ class BaseModel:
     def extract_y(self):
         binarizer = MultiLabelBinarizer()
         y = binarizer.fit_transform(self.y.split("_")) # split y by each technique as it was inserted into the database
-        classes = binarizer.classes_ # get fitted classes
+        self.classes = binarizer.classes_ # get fitted classes
 
         # construct the output graph to identify relationships between classes
-        nodes,edges,weights = self.create_graph_matricies(y,classes)
+        nodes,edges,weights = self.create_graph_matricies(y,self.classes)
         nx_graph = nx.Graph()
         nx_graph.add_nodes_from(nodes)
         nx_graph.add_edges_from(edges)
 
         # fit node2vec, get dimension reduced embeddings
         n2v = Node2Vec(nx_graph,dimensions=32,walk_length=30,num_walks=300,workers=12)
-        model = n2v.fit(window=10, min_count=1, batch_words=8)
+        self.n2v = n2v.fit(window=10, min_count=1, batch_words=8)
 
+    def train(self,X,y):
+        self.X = X
+        self.y = y
         # encode y to embeddings then train
-        new_y = self.embedding_encode(y,model)
-        rnc = self.train_embedder(new_y,y)
-        lin_reg = lm.LinearRegression(n_jobs=-1)
+        new_y = self.embedding_encode(y,self.model)
+        self.rnc = self.train_embedder(new_y,y)
         X_train = self.X.toarray()
-        lin_reg.fit(X_train,new_y)
+        self.model = lm.LinearRegression(n_jobs=-1)
+        self.model.fit(X_train,new_y)
         logging.info("base_model: regression model fit")
         logging.info("base_model: testing model...")
 
         # test data using f1 score to give users some verbosity on how well the model performed
-        test = lin_reg.predict(X_train)
-        lab = self.embedding_decode(test,rnc)
+        test = self.model.predict(X_train)
+        lab = self.embedding_decode(test,self.rnc)
         score = f1_score(y,lab,average='weighted')
         logging.info("f1 score on training data: {}".format(score))
+
+    def predict(self,X):
+        output = self.model.predict(X)
+        decoded_output = self.embedding_decode(output,self.rnc)
+        full_out = []
+        for i in decoded_output:
+            temp = []
+            for j in range(len(i)):
+                if(i[j]):
+                    temp.append(classes[j])
+            full_out.append(temp)
+        return full_out
