@@ -85,64 +85,16 @@ class RetrainingService:
 
         return training_sents,training_labels
 
-    def fill_arrays(self,i,X,y,key):
+    def train_model(self,training_data,model={'file':'base_model','class':None}):
         '''
-        description: helper function to fill training data arrays
-        input: inner training dictionary data, X_data, y_data, inner dictionary key
-        output: X_data,y_data
+        description: method to handle training models loaded from the models directory
+        input: tuple of training data in form (X,y)
+        output: model object
         '''
-        try:
-            for t in i[key]:
-                X.append(t)
-                if(key == 'fp' or key == 'tn'):
-                    y.append(False)
-                else:
-                    y.append(True)
-        except Exception:
-            _=0
-        return X,y
-
-    def create_negative_training_set(self,training_dict,num_pos_examples,current_num_neg,key):
-        '''
-        description: Creates a set of training data containing only negative training examples
-        input: training data, number of positive examples in training data for key, current number of negative
-        examples for key, key (attack_uid to train on)
-        output: negative example training data 
-        '''
-        # make sure negative examples are the same length as positive examples
-        # grab data from other positive examples but ensure that they aren't the same key
-        # Get data from precreated training dict
-        # Also get examples from sentances that aren't related to attack at all (maybe load into redis and pull from there)
-        # split negative examples on 70-30 split, 30% are positive examples 70% are normal sentances
-
-        unrelated_sentances = ["You're good at English when you know the difference between a man eating chicken and a man-eating chicken.",
-        "Pair your designer cowboy hat with scuba gear for a memorable occasion.","When nobody is around, the trees gossip about the people who have walked under them.",
-        "The three-year-old girl ran down the beach as the kite flew behind her.","Nothing seemed out of place except the washing machine in the bar.",
-        "The pigs were insulted that they were named hamburgers.","Weather is not trivial - it's especially important when you're standing in it.",
-        "Sometimes it is better to just walk away from things and go back to them later when you’re in a better frame of mind.",
-        "The quick brown fox jumps over the lazy dog.","I think I will buy the red car, or I will lease the blue one.",
-        "Don't step on the broken glass.","Would you rather be the best player on a horrible team or the worst player on a great team?",
-        "The snow-covered path was no help in finding his way out of the backcountry.","What was your least favorite subject in school?",
-        "Joe made the sugar cookies; Susan decorated them.","The opportunity of a lifetime passed before him as he tried to decide between a cone or a cup.",
-        "He was disappointed when he found the beach to be so sandy and the sun so sunny."]
-
-        to_get = num_pos_examples-current_num_neg
-
-        neg_attack_num = round(to_get*0.333)
-        attack_keys = list(training_dict.keys())
-        #print(attack_keys)
-        negative_examples = []
-
-        for _ in range(neg_attack_num):
-            neg_key = np.random.choice(attack_keys)
-            while(neg_key == key or len(training_dict[neg_key]['tp']) == 0): # make sure key is not the positive example key
-                neg_key = np.random.choice(attack_keys)
-            negative_examples.append(np.random.choice(training_dict[neg_key]['tp']))
-            
-        for _ in range(to_get-neg_attack_num): # loop through the number of total wanted minu the number already retrieved
-            negative_examples.append(np.random.choice(unrelated_sentances))
-        #falses = [False*len(negative_examples)]
-        return negative_examples
+        X,y = training_data
+        if(model['file'] == 'base_model'):
+            from models.base_model import BaseModel
+        
 
     def train_on_data(self,training_dict): # new training on data involves technique specific
         '''
@@ -153,27 +105,17 @@ class RetrainingService:
         cv = CountVectorizer(max_features=2500)
         tft = TfidfTransformer()
 
-        models = {}
         logging.info("retrain_svc: initiate training")
+        # build graph for y labels
+
+
         for j in training_dict:
             X_data = []
             y_data = []
             i = training_dict[j]
-            
-            X_data,y_data = self.fill_arrays(i,X_data,y_data,'tp')
-            X_data,y_data = self.fill_arrays(i,X_data,y_data,'fn')
-            X_data,y_data = self.fill_arrays(i,X_data,y_data,'fp')
-            X_data,y_data = self.fill_arrays(i,X_data,y_data,'tn')
 
             len_pos = len([i for i in y_data if i == True])
             len_neg = len(y_data) - len_pos
-
-            negative_values = self.create_negative_training_set(training_dict,len_pos,len_neg,j)
-            for i in negative_values:
-                X_data.append(i)
-                y_data.append(False)
-            #X_data.extend(negative_values)
-            #y_data.extend(falses)
             
             if(True in y_data and False in y_data):
                 X_train,X_test,y_train,y_test = train_test_split(np.array(X_data),np.array(y_data),test_size=0.1)

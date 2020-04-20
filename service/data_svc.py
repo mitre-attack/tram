@@ -41,7 +41,7 @@ class DataService:
 
     async def insert_reports_data(self):
         logging.info('Loading analyzed reports.')
-        with open("models/all_analyzed_reports.json",'r') as f:
+        with open("data/all_analyzed_reports.json",'r') as f:
             annotations = json.loads(f.read())
         labels = []
         keys = list(annotations.keys())
@@ -84,7 +84,7 @@ class DataService:
 
     async def insert_negative_data(self):
         logging.info("Loading negative examples.")
-        with open("models/negative_data.json",'r') as f:
+        with open("data/negative_data.json",'r') as f:
             negs = json.loads(f.read())
         sentances = []
         for i in negs:
