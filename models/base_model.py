@@ -122,6 +122,6 @@ class BaseModel:
             temp = []
             for j in range(len(i)):
                 if(i[j]):
-                    temp.append(classes[j])
+                    temp.append(self.classes[j])
             full_out.append(temp)
         return full_out
