@@ -74,10 +74,12 @@ class DataService:
         for i in tqdm(range(len(sentances))):
             j = labels[0]
             for k in uids:
-                if(k['name'].lower() == j.lower()):
+                print(k['name'].lower())
+                name = k['name']
+                if(name.lower() == j.lower()):
                     uid = k['uid']
                     break
-            await self.dao.insert('true_positives',dict(uid=uid,true_positive=defang_text(sentances[i]),labels=' '.join(labels)))
+            await self.dao.insert('true_positives',dict(uid=uid,true_positive=defang_text(sentances[i]),labels='_'.join(labels)))
 
     async def insert_negative_data(self):
         logging.info("Loading negative examples.")
@@ -161,16 +163,16 @@ class DataService:
                     [await self.dao.insert('similar_words', dict(uid=k, similar_word=defang_text(x))) for x in
                      v['similar_words']]
                 if 'false_negatives' in v:
-                    [await self.dao.insert('false_negatives', dict(uid=k, false_negative=defang_text(x),labels=v['name'])) for x in
+                    [await self.dao.insert('false_negatives', dict(uid=k, false_negative=defang_text(x),labels=v['name'].lower())) for x in
                      v['false_negatives']]
                 if 'false_positives' in v:
-                    [await self.dao.insert('false_positives', dict(uid=k, false_positive=defang_text(x),labels=v['name'])) for x in
+                    [await self.dao.insert('false_positives', dict(uid=k, false_positive=defang_text(x),labels=v['name'].lower())) for x in
                      v['false_positives']]
                 if 'true_positives' in v:
-                    [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x),labels=v['name'])) for x in
+                    [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x),labels=v['name'].lower())) for x in
                      v['true_positives']]
                 if 'example_uses' in v:
-                    [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x),labels=v['name'])) for x in
+                    [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x),labels=v['name'].lower())) for x in
                      v['example_uses']]
         logging.info('[!] DB Item Count: {}'.format(len(await self.dao.get('attack_uids'))))
 

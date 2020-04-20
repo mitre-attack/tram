@@ -1,7 +1,7 @@
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.model_selection import train_test_split
 #from sklearn.linear_model import LogisticRegression
-from skmultlearn.problem_transform import ClassifierChain
+from skmultilearn.problem_transform import ClassifierChain
 from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import MultiLabelBinarizer
 
@@ -43,27 +43,28 @@ class RetrainingService:
         r.set("model",model_dump)
         r.set("model_hash",model_hash)
 
-    def modify_training_dict(self,training_dict,in_data,dict_key,in_key):
+    def extract_data(self,in_data,sentances,labels,key):
         '''
         description: Creates the training data dictionary
-        input: training data dictionary, data to put in dictionary, training dictionary key, input data key
-        output: training dictionary
+        input: input data, output sentances, output labels, key for input data
+        output: X sentances, y labels
         '''
-        for t in in_data:
-            t_uid = t['uid']
-            if(t_uid not in training_dict.keys()):
-                training_dict[t_uid] = {dict_key:[]}
-            elif(dict_key not in training_dict[t_uid].keys()):
-                training_dict[t_uid][dict_key] = []
-            else:
-                training_dict[t_uid][dict_key].append(t[in_key])
-        return training_dict
+        if(key != 'sentance'):
+            for t in in_data:
+                labels.append(t['labels'])
+                sentances.append(t[key])
+        else:
+            for t in in_data:
+                labels.append(t['uid'])
+                sentances.append(t[key])
+            
+        return sentances,labels
 
     def get_training_data(self): # gets and assembles a dictionary of training data from the database
         '''
-        description: Gets training data from database, and outputs a dictionary of scema {'attack_uid':{'accuracy_type' (fp, tp, ...)}}
+        description: Gets training data from database, and outputs two arrays, an array of sentances, and an array of corresponding labels
         input: nil
-        output: dictionary of dictionaries
+        output: X sentences, y labels
         '''
         logging.info("retrain_svc: Getting data from sql")
         loop = asyncio.get_event_loop()
@@ -71,15 +72,18 @@ class RetrainingService:
         false_positives = loop.run_until_complete(self.dao.get('false_positives'))
         false_negatives = loop.run_until_complete(self.dao.get('false_negatives'))
         true_negatives = loop.run_until_complete(self.dao.get('true_negatives'))
-        training_data = {}
+        training_sents = []
+        training_labels = []
 
-        logging.info("retrain_svc: Creating training dict")
-        training_data = self.modify_training_dict(training_data,true_positives,'tp','true_positive') # Assemble dictionary for training data
-        training_data = self.modify_training_dict(training_data,false_positives,'fp','false_positive')
-        training_data = self.modify_training_dict(training_data,false_negatives,'fn','false_negative')
-        training_data = self.modify_training_dict(training_data,true_negatives,'tn','sentence')
+        logging.info("retrain_svc: Formatting Sentances")
 
-        return training_data
+        training_sents,training_labels = self.extract_data(true_positives,training_sents,training_labels,'true_positive') # Assemble dictionary for training data
+        training_sents,training_labels = self.extract_data(false_positives,training_sents,training_labels,'false_positive')
+        training_sents,training_labels = self.extract_data(false_negatives,training_sents,training_labels,'false_negative')
+        training_sents,training_labels = self.extract_data(true_negatives,training_sents,training_labels,'sentence')
+        #training_data = self.modify_training_dict(training_data,true_negatives,'tn','sentence')
+
+        return training_sents,training_labels
 
     def fill_arrays(self,i,X,y,key):
         '''
@@ -146,7 +150,7 @@ class RetrainingService:
         input: training data
         output: dictionary of models (boosted classifier)
         '''
-        cv = CountVectorizer(max_features=500)
+        cv = CountVectorizer(max_features=2500)
         tft = TfidfTransformer()
 
         models = {}
@@ -194,13 +198,14 @@ class RetrainingService:
         '''
         while(True):
             time_check = time.localtime(time.time())
-            if(time_check[3] == 12 and time_check[4] == 0): # kick off training at noon and midnight
-                raw_data = self.get_training_data()
-                models = self.train_on_data(raw_data)
-                self.save_current_model(models)
-                logging.info("retrain_svc: Retraining task finished")
-            else:
-                time.sleep(10)
+            #if(time_check[3] == 12 and time_check[4] == 0): # kick off training at noon and midnight
+            raw_data = self.get_training_data()
+            #print(raw_data)
+            models = self.train_on_data(raw_data)
+            self.save_current_model(models)
+            logging.info("retrain_svc: Retraining task finished")
+            #else:
+            #    time.sleep(10)
 
     def handler(self):
         self.train()
