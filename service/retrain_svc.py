@@ -5,6 +5,10 @@ from skmultilearn.problem_transform import ClassifierChain
 from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import MultiLabelBinarizer
 
+from urllib.request import pathname2url
+import os
+from time import sleep
+
 import spacy
 import pandas as pd
 import numpy as np
@@ -13,6 +17,8 @@ import pickle
 import hashlib
 import logging
 import asyncio
+
+import sqlite3
 
 import time
 
@@ -144,14 +150,14 @@ class RetrainingService:
         '''
         while(True):
             time_check = time.localtime(time.time())
-            if(time_check[3] == 12 and time_check[4] == 0): # kick off training at noon and midnight
-                raw_data = self.get_training_data()
-                #print(raw_data)
-                models = self.train_model(raw_data) #self.train_on_data(raw_data)
-                self.save_current_model(models)
-                logging.info("retrain_svc: Retraining task finished")
-            else:
-                time.sleep(10)
+            #if(time_check[3] == 12 and time_check[4] == 0): # kick off training at noon and midnight
+            raw_data = self.get_training_data()
+            #print(raw_data)
+            models = self.train_model(raw_data) #self.train_on_data(raw_data)
+            self.save_current_model(models)
+            logging.info("retrain_svc: Retraining task finished")
+            #else:
+            #    time.sleep(10)
 
     def handler(self):
         self.train()

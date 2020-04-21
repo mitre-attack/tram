@@ -25,8 +25,6 @@ async def startup_event():
     except FileNotFoundError:
         print("Database not built")
         build = True
-    finally:
-        f.close()
 
     if(build):
         if taxii_local == 'local-json' and bool(os.path.isfile(json_file)):
@@ -41,6 +39,8 @@ async def startup_event():
             await handler.data_svc.insert_attack_stix_data()
             await handler.data_svc.insert_reports_data()
             await handler.data_svc.insert_negative_data()
+    pool = mp.Process(target=handler.retrain_svc.handler,daemon=True)
+    pool.start()
 
 
 def main(host, port, taxii_local=False, build=False, json_file=None):
@@ -59,8 +59,6 @@ if __name__ == '__main__':
         json_file = os.path.join('models', config['json_file'])
         attack_dict = None
     handler = ServiceHandler()
-    pool = mp.Process(target=handler.retrain_svc.handler,daemon=True)
-    pool.start()
     main(config_host, config_port, taxii_local=taxii_local, json_file=attack_dict)
 
 
