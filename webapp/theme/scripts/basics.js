@@ -58,7 +58,7 @@ function submit_report(){
     if(title.length != url.length){
       alert("Number of urls and titles do not match, please insert same number of comma seperated items.");
     }else{
-      restRequest('POST', {'index':'insert_report', 'url':url, 'title':title}, show_info);
+      restRequest('POST', {'index':'insert_report', 'url':url, 'title':title}, upload_success);
     }    
 }
 
@@ -72,13 +72,19 @@ function upload_file(){
     reader.readAsText(file, "UTF-8");
     reader.onload = function(evt){
       console.log(evt.target.result)
-      restRequest('POST', {'index':'insert_csv','file':evt.target.result},show_info);
+      restRequest('POST', {'index':'insert_csv','file':evt.target.result},upload_success);
     }
     reader.onerror = function(evt){
       alert("Error reading file");
     }
   }
 }
+
+function upload_success(data) {
+    if (data.status == "error") {
+        alert("Error: " + data.msg);
+    }
+} 
 
 function show_dropdown() {
   document.getElementById("myDropdown").classList.toggle("show");

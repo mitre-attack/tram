@@ -2,6 +2,8 @@ import json
 import asyncio
 from io import StringIO
 import pandas as pd
+import requests
+from exception.exceptions import ImportReportError
 
 class RestService:
 
@@ -88,8 +90,14 @@ class RestService:
             await self.queue.put(temp_dict)
         # criteria = dict(title=criteria['title'], url=criteria['url'],current_status="needs_review")
         # await self.queue.put(criteria)
-        asyncio.create_task(self.check_queue()) # check queue background task
-        await asyncio.sleep(0.01)
+        try:
+            asyncio.create_task(self.check_queue()) # check queue background task
+            await asyncio.sleep(0.01)
+        except ImportReportError as err:
+            print("Error: " + err.msg + ": " + criteria['title'])
+            await self.dao.delete('report', err.report_id)
+            return dict(status='error', msg=err.msg + ': ' + criteria['title'])
+        return dict(status='inserted')
 
     async def insert_csv(self,criteria=None):
         file = StringIO(criteria['file'])
@@ -98,8 +106,13 @@ class RestService:
             temp_dict = dict(title=df['title'][row],url=df['url'][row],current_status="queue")
             temp_dict['id'] = await self.dao.insert('reports', temp_dict)
             await self.queue.put(temp_dict)
-        asyncio.create_task(self.check_queue())
-        await asyncio.sleep(0.01)
+        try:
+            asyncio.create_task(self.check_queue()) # check queue background task
+            await asyncio.sleep(0.01)
+        except ImportReportError as err:
+            print("Error: " + err.msg + ": " + criteria['title'])
+            await self.dao.delete('report', err.report_id)
+            return dict(status='error', msg=err.msg + ': ' + criteria['title'])
 
     async def check_queue(self):
         '''
@@ -122,12 +135,20 @@ class RestService:
                             del self.resources[task]  # when task is finished, remove from resource pool
                     await asyncio.sleep(1)  # allow other tasks to run while waiting
                 criteria = await self.queue.get()  # get next task off queue, and run it
-                task = asyncio.create_task(self.start_analysis(criteria))
-                self.resources.append(task)
+                try:
+                    task = asyncio.create_task(self.start_analysis(criteria))
+                except ImportReportError as err:
+                    raise err
+                else:
+                    self.resources.append(task)
             else:
                 criteria = await self.queue.get() # get next task off queue and run it
-                task = asyncio.create_task(self.start_analysis(criteria))
-                self.resources.append(task)
+                try:
+                    task = asyncio.create_task(self.start_analysis(criteria))
+                except ImportReportError as err:
+                    raise err
+                else:
+                    self.resources.append(task)
 
     async def start_analysis(self, criteria=None):
         tech_data = await self.dao.get('attack_uids')
@@ -155,8 +176,13 @@ class RestService:
 
                 techniques[row['uid']] = {'id': row['tid'], 'name': row['name'], 'similar_words': [],
                                           'example_uses': tp, 'false_positives': fp}
+        try:
+            print("Analyzing report: " + criteria['title'])
+            html_data = await self.web_svc.get_url(criteria['url'])
+        except (requests.exceptions.TooManyRedirects, requests.exceptions.RequestException):
+            print("Unable to process report: " + criteria['title'])
+            raise ImportReportError("Unable to process report", criteria['id'])
 
-        html_data = await self.web_svc.get_url(criteria['url'])
         original_html = await self.web_svc.map_all_html(criteria['url'])
 
         article = dict(title=criteria['title'], html_text=html_data)
@@ -191,7 +217,8 @@ class RestService:
 
         for element in original_html:
             html_element = dict(report_uid=report_id, text=element['text'], tag=element['tag'], found_status="false")
-            await self.dao.insert('original_html', html_element)
+            await self.dao.insert('original_html', html_element)    
+        print("Analyzed report: " + criteria['title'])
 
     async def missing_technique(self, criteria=None):
         # Get the attack information for this attack id
