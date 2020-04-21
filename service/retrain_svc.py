@@ -37,7 +37,6 @@ class RetrainingService:
         self.redis_ip = 'localhost'
         self.redis_port = 6379
         self.dao = dao
-        self.model = None
 
     def save_current_model(self,model):
         '''
@@ -45,7 +44,7 @@ class RetrainingService:
         input: dictionary of scikit-learn LogisticRegression models with attack_uid as keys
         output: nil
         '''
-        logging.info("retrain_svc: Saving model to redis")
+        print("retrain_svc: Saving model to redis")
         r = redis.Redis(host=self.redis_ip, port=self.redis_port, db=0)
         model_dump = pickle.dumps(model)
         model_hash = hashlib.md5(model_dump).hexdigest()
@@ -64,7 +63,7 @@ class RetrainingService:
             model = r.get("model")
             return model
         except Exception:
-            print("No model in the redis store")
+            print("retrain_svc: No model in the redis store")
             return None
 
     def extract_data(self,in_data,sentances,labels,key):
@@ -90,16 +89,26 @@ class RetrainingService:
         input: nil
         output: X sentences, y labels
         '''
-        logging.info("retrain_svc: Getting data from sql")
+        print("retrain_svc: Getting data from sql")
         loop = asyncio.get_event_loop()
-        true_positives = loop.run_until_complete(self.dao.get('true_positives')) # Grab all training data from database
-        false_positives = loop.run_until_complete(self.dao.get('false_positives'))
-        false_negatives = loop.run_until_complete(self.dao.get('false_negatives'))
-        true_negatives = loop.run_until_complete(self.dao.get('true_negatives'))
+        while(True):
+            try:
+                true_positives = loop.run_until_complete(self.dao.get('true_positives')) # Grab all training data from database
+                false_positives = loop.run_until_complete(self.dao.get('false_positives'))
+                false_negatives = loop.run_until_complete(self.dao.get('false_negatives'))
+                true_negatives = loop.run_until_complete(self.dao.get('true_negatives'))
+                if(len(true_positives) == 0 or len(true_negatives) == 0): # wait until database is fully populated
+                    sleep(10)
+                    continue
+                else:
+                    break
+            except Exception as e:
+                continue
+
         training_sents = []
         training_labels = []
 
-        logging.info("retrain_svc: Formatting Sentances")
+        print("retrain_svc: Formatting Sentances")
 
         training_sents,training_labels = self.extract_data(true_positives,training_sents,training_labels,'true_positive') # Assemble dictionary for training data
         training_sents,training_labels = self.extract_data(false_positives,training_sents,training_labels,'false_positive')
@@ -140,7 +149,7 @@ class RetrainingService:
                 #print(raw_data)
                 model = self.train_model(raw_data) #self.train_on_data(raw_data)
                 self.save_current_model(model)
-                logging.info("retrain_svc: Retraining task finished")
+                print("retrain_svc: Retraining task finished")
             else:
                 time.sleep(10)
 
