@@ -6,6 +6,8 @@ import os, pickle, random
 import nltk
 import logging
 import asyncio
+import redis
+from tqdm import tqdm
 
 
 class MLService:
@@ -14,10 +16,40 @@ class MLService:
     def __init__(self, web_svc, dao):
         self.web_svc = web_svc
         self.dao = dao
+        self.redis_ip = 'localhost'
+        self.redis_port = 6379
 
-        
+    async def load_model(self):
+        r = redis.Redis(host=self.redis_ip,port=self.redis_port,db=0)
+        try:
+            model_dump = r.get("model")
+            model = pickle.loads(model_dump)
+        except Exception:
+            print("Error loading model, either redis is down, or the model has not been trained yet")
+        return model
 
-
+    async def analyze_html(self, model, list_of_sentences):
+        logging.info("analyzing sentances with model...")
+        print(model)
+        for i in tqdm(list_of_sentences):
+            print(i['text'])
+            labels = model.predict([i['text']])
+            print(labels)
+            i['ml_techniques_found'] = labels
+        print(list_of_sentences)
+        return list_of_sentences
+        '''
+        for i in list_of_techs:
+            cv, logreg = model_dict[i]
+            final_df = await self.analyze_document(cv, logreg, list_of_sentences)
+            count = 0
+            for vals in final_df['category']:
+                await asyncio.sleep(0.001)
+                if vals == True:
+                    list_of_sentences[count]['ml_techniques_found'].append(i)
+                count += 1
+        return list_of_sentences
+        '''
 
 
 
@@ -75,13 +107,13 @@ class MLService:
         print("{} - {}".format(tech_name, logreg.score(X_test, y_test)))
         return (cv, logreg)
 
-    async def analyze_document(self, cv, logreg, sentences):
+    async def analyze_document(self, cv, model, sentences):
         cleaned_sentences = [await self.web_svc.tokenize(i['text']) for i in sentences]
 
         df2 = pd.DataFrame({'text': cleaned_sentences})
         Xnew = cv.transform(df2['text']).toarray()
         await asyncio.sleep(0.01)
-        y_pred = logreg.predict(Xnew)
+        y_pred = model.predict(Xnew)
         df2['category'] = y_pred.tolist()
         return df2
 
@@ -102,18 +134,6 @@ class MLService:
             print('[#] Loading models from pickled file: model_dict.p')
             model_dict = pickle.load(open('models/model_dict.p', 'rb'))
         return model_dict
-
-    async def analyze_html(self, list_of_techs, model_dict, list_of_sentences):
-        for i in list_of_techs:
-            cv, logreg = model_dict[i]
-            final_df = await self.analyze_document(cv, logreg, list_of_sentences)
-            count = 0
-            for vals in final_df['category']:
-                await asyncio.sleep(0.001)
-                if vals == True:
-                    list_of_sentences[count]['ml_techniques_found'].append(i)
-                count += 1
-        return list_of_sentences
 
     async def ml_techniques_found(self, report_id, sentence):
         sentence_id = await self.dao.insert('report_sentences',
