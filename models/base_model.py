@@ -147,6 +147,9 @@ class BaseModel:
         print("f1 score on training data: {}".format(score))
 
     def predict(self,X):
+        if(self.model == None):
+            print("ERROR: Model needs to be trained first")
+            return None
         output = self.model.predict(X)
         decoded_output = self.embedding_decode(output,self.rnc)
         full_out = []

@@ -37,8 +37,9 @@ class RetrainingService:
         self.redis_ip = 'localhost'
         self.redis_port = 6379
         self.dao = dao
+        self.model = None
 
-    def save_current_model(self,models):
+    def save_current_model(self,model):
         '''
         description: loads models dictionary into redis
         input: dictionary of scikit-learn LogisticRegression models with attack_uid as keys
@@ -46,10 +47,25 @@ class RetrainingService:
         '''
         logging.info("retrain_svc: Saving model to redis")
         r = redis.Redis(host=self.redis_ip, port=self.redis_port, db=0)
-        model_dump = pickle.dumps(models)
+        model_dump = pickle.dumps(model)
         model_hash = hashlib.md5(model_dump).hexdigest()
         r.set("model",model_dump)
         r.set("model_hash",model_hash)
+
+    def check_redis(self):
+        '''
+        description: checks redis to see if a model exists
+        input: nil
+        output: model if it does exist, and None if it doesn't
+        '''
+        r = redis.Redis(host=self.redis_ip,port=self.redis_port,db=0)
+        try:
+            _ = r.get("model_hash")
+            model = r.get("model")
+            return model
+        except Exception:
+            print("No model in the redis store")
+            return None
 
     def extract_data(self,in_data,sentances,labels,key):
         '''
@@ -111,13 +127,19 @@ class RetrainingService:
         input: nil
         output: nil
         '''
+        # on startup, check redis for model, if no model exists, train the model immediatly
+        redis_out = self.check_redis()
+        if(redis_out == None):
+            raw_data = self.get_training_data()
+            model = self.train_model(raw_data)
+            self.save_current_model(model)
         while(True):
             time_check = time.localtime(time.time())
             if(time_check[3] == 12 and time_check[4] == 0): # kick off training at noon and midnight
                 raw_data = self.get_training_data()
                 #print(raw_data)
-                models = self.train_model(raw_data) #self.train_on_data(raw_data)
-                self.save_current_model(models)
+                model = self.train_model(raw_data) #self.train_on_data(raw_data)
+                self.save_current_model(model)
                 logging.info("retrain_svc: Retraining task finished")
             else:
                 time.sleep(10)
