@@ -7,14 +7,23 @@ from fastapi import FastAPI
 from service.handler import ServiceHandler
 from handlers.api import api_core
 
+import multiprocessing as mp
+
+from service.retrain_svc import RetrainingService
 app = FastAPI()
 
 
 @app.on_event("startup")
 async def startup_event():
-    if(os.path.isfile('database/tram.db')):
-        build = False
-    else:
+    try:
+        f = open("./database/tram.db",encoding='latin')
+        # Do something with the file
+        if(f.read(1) == ''):
+            build = True
+        else:
+            build = False
+    except FileNotFoundError:
+        print("Database not built")
         build = True
 
     if(build):
@@ -23,9 +32,13 @@ async def startup_event():
             attack_dict = os.path.abspath(json_file)
             await handler.data_svc.reload_database()
             await handler.data_svc.insert_attack_json_data(attack_dict)
+            await handler.data_svc.insert_reports_data()
+            await handler.data_svc.insert_negative_data()
         else:
             await handler.data_svc.reload_database()
             await handler.data_svc.insert_attack_stix_data()
+            await handler.data_svc.insert_reports_data()
+            await handler.data_svc.insert_negative_data()
 
 
 def main(host, port, taxii_local=False, build=False, json_file=None):
@@ -34,16 +47,18 @@ def main(host, port, taxii_local=False, build=False, json_file=None):
 
 
 if __name__ == '__main__':
-
+    print("Starting")
     with open('conf/config.yml') as conf:
         config = yaml.safe_load(conf)
-        conf_build = config['build']
+        #conf_build = config['build']
         config_host = config['host']
         config_port = config['port']
         taxii_local = config['taxii-local']
         json_file = os.path.join('models', config['json_file'])
         attack_dict = None
     handler = ServiceHandler()
+    pool = mp.Process(target=handler.retrain_svc.handler,daemon=True)
+    pool.start()
     main(config_host, config_port, taxii_local=taxii_local, json_file=attack_dict)
 
 

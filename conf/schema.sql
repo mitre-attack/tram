@@ -11,6 +11,7 @@ CREATE TABLE if not exists true_positives (
     uid VARCHAR(60),
     sentence_id integer,
     true_positive TEXT,
+    labels TEXT,
     element_tag TEXT,
     FOREIGN KEY(uid) REFERENCES attack_uids(uid)
     );
@@ -19,6 +20,7 @@ CREATE TABLE if not exists false_positives (
     uid VARCHAR(60),
     sentence_id integer,
     false_positive TEXT,
+    labels TEXT,
     FOREIGN KEY(uid) REFERENCES attack_uids(uid)
     );
 
@@ -26,6 +28,7 @@ CREATE TABLE if not exists false_negatives (
     uid VARCHAR(60),
     sentence_id INTEGER,
     false_negative TEXT,
+    labels TEXT,
     FOREIGN KEY(uid) REFERENCES attack_uids(uid)
     );
 

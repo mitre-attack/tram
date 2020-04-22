@@ -4,6 +4,7 @@ import logging
 from taxii2client import Collection
 from fastapi import BackgroundTasks
 from stix2 import TAXIICollectionSource, Filter
+from tqdm import tqdm
 
 
 background_tasks = BackgroundTasks
@@ -37,6 +38,62 @@ class DataService:
         """
         with open(schema) as schema:
             await self.dao.build((schema.read()))
+
+    async def insert_reports_data(self):
+        logging.info('Loading analyzed reports.')
+        with open("data/all_analyzed_reports.json",'r') as f:
+            annotations = json.loads(f.read())
+        labels = []
+        keys = list(annotations.keys())
+        sentances = []
+        for ann in annotations:
+            temp = []
+            if(ann[-6:] == "-multi"):
+                tech_names = annotations[ann]['technique_names']
+                for key in keys:
+                    if("-multi" in key):
+                        continue
+                    if(key in tech_names):
+                        temp.append(key)
+            else:
+                for key in keys:
+                    if("-multi" in key):
+                        continue
+                    if(key == ann):
+                        temp.append(key)
+            for i in annotations[ann]:
+                if(i == "technique_names" or i == "sentances"):
+                    for j in annotations[ann]['sentances']:
+                        sentances.append(j)
+                        labels.append(temp)
+                else:
+                    labels.append(temp)
+                    sentances.append(i)
+        uids = await self.dao.get('attack_uids')
+        logging.info("Inserting reports into database.")
+        for i in tqdm(range(len(sentances))):
+            if(len(labels[i]) == 0):
+                labels[i] = ['NO_TECHNIQUE']
+            j = labels[i][0]
+            for k in uids:
+                name = k['name']
+                if(name.lower() == j.lower()):
+                    uid = k['uid']
+                    break
+            await self.dao.insert('true_positives',dict(uid=uid,true_positive=defang_text(sentances[i]),labels='_'.join(labels[i])))
+
+    async def insert_negative_data(self):
+        logging.info("Loading negative examples.")
+        with open("data/negative_data.json",'r') as f:
+            negs = json.loads(f.read())
+        sentances = []
+        for i in negs:
+            sentances.append(i)
+        for i in range(25): # force model to see any blanks as nothing, just in case errors happen
+            sentances.append("")
+        logging.info("Inserting negative examples into database.")
+        for i in tqdm(range(len(sentances))):
+            await self.dao.insert('true_negatives',dict(uid="NO_TECHNIQUE",sentence=i))
 
     async def insert_attack_stix_data(self):
         """
@@ -96,10 +153,10 @@ class DataService:
 
         cur_uids = await self.dao.get('attack_uids') if await self.dao.get('attack_uids') else []
         cur_items = [i['uid'] for i in cur_uids]
-        for k, v in attack_data.items():
+        for k, v in tqdm(attack_data.items()):
             if k not in cur_items:
                 await self.dao.insert('attack_uids', dict(uid=k, description=defang_text(v['description']), tid=v['id'],
-                                                          name=v['name']))
+                                                          name=v['name'].lower()))
                 if 'regex_patterns' in v:
                     [await self.dao.insert('regex_patterns', dict(uid=k, regex_pattern=defang_text(x))) for x in
                      v['regex_patterns']]
@@ -107,16 +164,16 @@ class DataService:
                     [await self.dao.insert('similar_words', dict(uid=k, similar_word=defang_text(x))) for x in
                      v['similar_words']]
                 if 'false_negatives' in v:
-                    [await self.dao.insert('false_negatives', dict(uid=k, false_negative=defang_text(x))) for x in
+                    [await self.dao.insert('false_negatives', dict(uid=k, false_negative=defang_text(x),labels=v['name'].lower())) for x in
                      v['false_negatives']]
                 if 'false_positives' in v:
-                    [await self.dao.insert('false_positives', dict(uid=k, false_positive=defang_text(x))) for x in
+                    [await self.dao.insert('false_positives', dict(uid=k, false_positive=defang_text(x),labels=v['name'].lower())) for x in
                      v['false_positives']]
                 if 'true_positives' in v:
-                    [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x))) for x in
+                    [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x),labels=v['name'].lower())) for x in
                      v['true_positives']]
                 if 'example_uses' in v:
-                    [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x))) for x in
+                    [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x),labels=v['name'].lower())) for x in
                      v['example_uses']]
         logging.info('[!] DB Item Count: {}'.format(len(await self.dao.get('attack_uids'))))
 
@@ -170,9 +227,9 @@ class DataService:
         logging.debug('[#] {} Techniques found that are not in the existing database'.format(len(to_add)))
         for k, v in to_add.items():
             await self.dao.insert('attack_uids', dict(uid=k, description=defang_text(v['description']), tid=v['id'],
-                                                      name=v['name']))
+                                                      name=v['name'].lower()))
             if 'example_uses' in v:
-                [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x))) for x in
+                [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x),labels=[v['name'].lower()])) for x in
                  v['example_uses']]
 
     async def status_grouper(self, status):
