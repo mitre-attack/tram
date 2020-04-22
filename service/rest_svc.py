@@ -105,11 +105,13 @@ class RestService:
             labels.discard(name)
             labels = list(labels)
             await self.dao.update('false_positives','uid',uid,dict(labels='_'.join(labels)))
+            await self.dao.delete('true_postivies',dict(uid=uid))
         else:
             name_raw = await self.dao.get('attack_uids',dict(uid=criteria['attack_uid']))
             name = name_raw[0]['name']
             await self.dao.insert('false_positives', dict(sentence_id=sentence_dict[0]['uid'], uid=criteria['attack_uid'],
                                                         false_positive=sentence_to_insert,labels=''))
+            await self.dao.delete('true_positives',dict(uid=sentence_dict[0]['uid']))
         return dict(status='inserted', last=last)
 
     async def insert_report(self, criteria=None):
