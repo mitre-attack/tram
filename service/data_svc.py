@@ -156,7 +156,7 @@ class DataService:
         for k, v in tqdm(attack_data.items()):
             if k not in cur_items:
                 await self.dao.insert('attack_uids', dict(uid=k, description=defang_text(v['description']), tid=v['id'],
-                                                          name=v['name']))
+                                                          name=v['name'].lower()))
                 if 'regex_patterns' in v:
                     [await self.dao.insert('regex_patterns', dict(uid=k, regex_pattern=defang_text(x))) for x in
                      v['regex_patterns']]
@@ -227,9 +227,9 @@ class DataService:
         logging.debug('[#] {} Techniques found that are not in the existing database'.format(len(to_add)))
         for k, v in to_add.items():
             await self.dao.insert('attack_uids', dict(uid=k, description=defang_text(v['description']), tid=v['id'],
-                                                      name=v['name']))
+                                                      name=v['name'].lower()))
             if 'example_uses' in v:
-                [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x),labels=[v['name']])) for x in
+                [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x),labels=[v['name'].lower()])) for x in
                  v['example_uses']]
 
     async def status_grouper(self, status):

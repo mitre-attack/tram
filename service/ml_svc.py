@@ -71,6 +71,7 @@ class MLService:
                                             dict(report_uid=report_id, text=sentence['text'], html=sentence['html'],
                                                  found_status="true"))
         for technique in sentence['ml_techniques_found']:
+            print(technique)
             attack_uid = await self.dao.get('attack_uids', dict(name=technique))
             if not attack_uid:
                 attack_uid = await self.dao.get('attack_uids', dict(tid=technique))

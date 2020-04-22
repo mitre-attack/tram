@@ -136,7 +136,7 @@ class RestService:
         json_tech = json.load(open("data/attack_dict.json", "r", encoding="utf_8"))
         techniques = {}
         for row in tech_data:
-            #await asyncio.sleep(0.01)
+            await asyncio.sleep(0.01)
             # skip software
             if 'tool' in row['tid'] or 'malware' in row['tid']:
                 continue
