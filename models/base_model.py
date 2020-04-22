@@ -14,12 +14,11 @@ import logging
 
 class BaseModel:
     def __init__(self):
-        self.X = None
-        self.y = None
         self.model = None# lm.LinearRegression(n_jobs=-1)
         self.rnc = None
-        self.n2v = None
         self.classes = None
+        self.tfid = None
+        self.count_vec = None
 
     def create_graph_matricies(self,y,classes):
         nodes = []
@@ -100,11 +99,18 @@ class BaseModel:
         print('Finished')
         return predicted_labels
 
-    def extract_X(self):
+    def extract_X(self,X):
         count_vec = CountVectorizer(max_features=2500)
         tfid = TfidfTransformer()
-        all_counts = count_vec.fit_transform(self.X)
-        self.X = tfid.fit_transform(all_counts)
+        all_counts = count_vec.fit_transform(X)
+        data = tfid.fit_transform(all_counts)
+        self.count_vec = count_vec
+        self.tfid = tfid
+        return data
+
+    def extract_X_for_prediction(self,X):
+        all_counts = self.count_vec.transform(X)
+        return self.tfid.transform(all_counts)
 
     def extract_y(self,y):
         binarizer = MultiLabelBinarizer()
@@ -114,26 +120,26 @@ class BaseModel:
                 new_y.append([i])
             else:
                 new_y.append(i.split("_"))
-        self.y = binarizer.fit_transform(new_y) # split y by each technique as it was inserted into the database
+        Y = binarizer.fit_transform(new_y) # split y by each technique as it was inserted into the database
         self.classes = binarizer.classes_ # get fitted classes
         # construct the output graph to identify relationships between classes
-        nodes,edges,weights = self.create_graph_matricies(self.y,self.classes)
+        nodes,edges,weights = self.create_graph_matricies(Y,self.classes)
         nx_graph = nx.Graph()
         nx_graph.add_nodes_from(nodes)
         nx_graph.add_edges_from(edges)
 
         # fit node2vec, get dimension reduced embeddings
         N2V = Node2Vec(nx_graph,dimensions=32,walk_length=30,num_walks=300,workers=1)
-        self.n2v = N2V.fit(window=10, min_count=1, batch_words=8)
+        n2v = N2V.fit(window=10, min_count=1, batch_words=8)
+        return Y,n2v
 
     def train(self,X,y):
-        self.X = X
-        self.extract_X()
-        self.extract_y(y)
+        ext_X = self.extract_X(X)
+        ext_y,n2v = self.extract_y(y)
         # encode y to embeddings then train
-        new_y = self.embedding_encode(self.y,self.n2v)
-        self.rnc = self.train_embedder(new_y,self.y)
-        X_train = self.X.toarray()
+        new_y = self.embedding_encode(ext_y,n2v)
+        self.rnc = self.train_embedder(new_y,ext_y)
+        X_train = ext_X.toarray()
         self.model = lm.LinearRegression()
         print("base_model: fitting regression model")
         self.model.fit(X_train,new_y)
@@ -143,14 +149,15 @@ class BaseModel:
         # test data using f1 score to give users some verbosity on how well the model performed
         test = self.model.predict(X_train)
         lab = self.embedding_decode(test,self.rnc)
-        score = f1_score(self.y,lab,average='weighted')
+        score = f1_score(ext_y,lab,average='weighted')
         print("f1 score on training data: {}".format(score))
 
     def predict(self,X):
         if(self.model == None):
             print("ERROR: Model needs to be trained first")
             return None
-        output = self.model.predict(X)
+        ext_X = self.extract_X_for_prediction(X)
+        output = self.model.predict(ext_X)
         decoded_output = self.embedding_decode(output,self.rnc)
         full_out = []
         for i in decoded_output:
