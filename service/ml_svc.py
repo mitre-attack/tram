@@ -38,7 +38,6 @@ class MLService:
                 i['ml_techniques_found'] = []
             else:
                 i['ml_techniques_found'] = labels[0]
-        print(list_of_sentences)
         return list_of_sentences
         '''
         for i in list_of_techs:
