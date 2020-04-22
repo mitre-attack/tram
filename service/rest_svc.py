@@ -63,8 +63,7 @@ class RestService:
         for tech in techniques:
             name = await self.dao.get('attack_uids', dict(uid=tech['uid']))
             tmp.append(name[0])
-        techniques_2 = await self.dao.get('false_positives',
-            dict(sentence_id=criteria['sentence_id']))
+        techniques_2 = await self.dao.get('false_positives',dict(sentence_id=criteria['sentence_id']))
         for tech in techniques_2:
             for label in tech['labels'].split('_'):
                 name = await self.dao.get('attack_uids' ,dict(name=label))
@@ -105,7 +104,7 @@ class RestService:
             labels.discard(name)
             labels = list(labels)
             await self.dao.update('false_positives','uid',uid,dict(labels='_'.join(labels)))
-            await self.dao.delete('true_postivies',dict(uid=uid))
+            await self.dao.delete('true_positives',dict(uid=uid))
         else:
             name_raw = await self.dao.get('attack_uids',dict(uid=criteria['attack_uid']))
             name = name_raw[0]['name']
