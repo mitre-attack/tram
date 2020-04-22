@@ -63,6 +63,12 @@ class RestService:
         for tech in techniques:
             name = await self.dao.get('attack_uids', dict(uid=tech['uid']))
             tmp.append(name[0])
+        techniques_2 = await self.dao.get('false_positives',
+            dict(sentence_id=criteria['sentence_id']))
+        for tech in techniques_2:
+            for label in tech['labels'].split('_'):
+                name = await self.dao.get('attack_uids' ,dict(name=label))
+                tmp.append(name[0])
         return tmp
 
     async def true_positive(self, criteria=None):
