@@ -71,7 +71,7 @@ class RestService:
                 if(label == ''):
                     continue
                 else:
-                    name = await self.dao.get('attack_uids' ,dict())
+                    name = await self.dao.get('attack_uids' ,dict(name=label))
                     tmp.append(name[0])
         return tmp
 
@@ -243,10 +243,12 @@ class RestService:
         sentence_to_insert = await self.web_svc.remove_html_markup_and_found(sentence_dict[0]['text'])
 
         # Insert new row in the true_positives database table to indicate a new confirmed technique
+        name = attack_dict[0]['name']
         await self.dao.insert('true_positives', dict(sentence_id=sentence_dict[0]['uid'],
                                                      uid=criteria['attack_uid'],
                                                      true_positive=sentence_to_insert,
-                                                     element_tag=criteria['element_tag']))
+                                                     element_tag=criteria['element_tag'],
+                                                     labels=name))
 
         # Insert new row in the report_sentence_hits database table to indicate a new confirmed technique
         # This is needed to ensure that requests to get all confirmed techniques works correctly

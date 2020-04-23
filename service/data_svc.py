@@ -137,7 +137,7 @@ class DataService:
                                 use = use[1:]
                     # combine all the examples to one list
                     references[i["target_ref"]]["example_uses"].append(use)
-
+        '''
         for i in attack["malware"]:
             if 'description' not in i:  # some software do not have description, example: darkmoon https://attack.mitre.org/software/S0209
                 continue
@@ -147,7 +147,8 @@ class DataService:
         for i in attack["tools"]:
             references[i["id"]] = {"id": i['id'], "name": i["name"], "description": i["description"], "examples": [],
                                    "example_uses": [], "similar_words": [i["name"]]}
-
+        '''
+        
         attack_data = references
         logging.info("Finished...now creating the database.")
 
