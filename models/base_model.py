@@ -42,12 +42,6 @@ class BaseModel:
                                 weights[(i,j)] = 1
         print('Edges complete')
         #to get frequency we'll divide by number of appearances
-        norm_matrix = np.copy(matrix)
-        for i in tqdm(range(matrix.shape[0])):
-            d = norm_matrix[i,i]
-            norm_matrix[:,i] = norm_matrix[:,i]/d
-            norm_matrix[i,:] = norm_matrix[i,:]/d
-            norm_matrix[i,i] = 1
         return nodes,edges,weights
 
     def embedding_encode(self,y, model):
