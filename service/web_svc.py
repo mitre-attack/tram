@@ -140,6 +140,7 @@ class WebService:
         await asyncio.sleep(0.01)
         try:
             b = newspaper.fulltext(r.text)
+            logging.debug("Successfully scraped the resource " + str(url))
         except Exception as e:
             logging.warning("Error in newspaper module, no data downloaded. " + str(e))
         return str(b).replace('\n', '<br>') if b else None
