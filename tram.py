@@ -8,6 +8,8 @@ import aiohttp_jinja2
 import jinja2
 from aiohttp import web
 
+import spacy
+
 from handlers.web_api import WebAPI
 from service.data_svc import DataService
 from service.web_svc import WebService
@@ -78,7 +80,6 @@ def main(host, port, taxii_local=False, build=False, json_file=None):
     """
     loop = asyncio.get_event_loop()
     loop.create_task(background_tasks(taxii_local=taxii_local, build=build, json_file=json_file))
-    loop.create_task(ml_svc.check_nltk_packs())
     loop.run_until_complete(init(host, port))
     try:
         loop.run_forever()
@@ -97,6 +98,7 @@ if __name__ == '__main__':
         host = config['host']
         port = config['port']
         taxii_local = config['taxii-local']
+        nlp = spacy.load(config['spacy_model'])
         json_file = os.path.join('models', config['json_file'])
         attack_dict = None
 
@@ -106,7 +108,7 @@ if __name__ == '__main__':
                 attack_dict = os.path.abspath(json_file)
 
     # Start services and initiate main function
-    web_svc = WebService()
+    web_svc = WebService(nlp)
     reg_svc = RegService(dao=dao)
     data_svc = DataService(dao=dao, web_svc=web_svc)
     ml_svc = MLService(web_svc=web_svc, dao=dao)

@@ -1,6 +1,4 @@
 from aiohttp_jinja2 import template, web
-import nltk
-import json
 
 
 class WebAPI:
@@ -13,7 +11,6 @@ class WebAPI:
         self.ml_svc = services['ml_svc']
         self.reg_svc = services['reg_svc']
         self.rest_svc = services['rest_svc']
-        self.tokenizer_sen = nltk.data.load('tokenizers/punkt/english.pickle')
 
     @template('about.html')
     async def about(self, request):

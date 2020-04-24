@@ -1,16 +1,16 @@
 import requests
-from nltk.corpus import stopwords
-import re
-import nltk
 import newspaper
-from nltk.stem import SnowballStemmer
 from html2text import html2text
 from bs4 import BeautifulSoup
 import asyncio
 import logging
 
+import spacy
 
 class WebService:
+
+    def __init__(self, nlp: spacy.language.Language):
+        self.nlp = nlp
 
     async def map_all_html(self, url_input):
         a = newspaper.Article(url_input, keep_article_html=True)
@@ -82,13 +82,11 @@ class WebService:
                         break
         return final_html
 
-    @staticmethod
-    async def tokenize_sentence(data):
+    async def tokenize_sentence(self, data):
         """
         :criteria: expects a dictionary of this structure:
         """
-        tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
-        html = tokenizer.tokenize(data)
+        html = list(map(lambda sent: sent.text, self.nlp(data).sents))
         sentences = []
         position = 0
         for data in html:
@@ -101,18 +99,9 @@ class WebService:
             sentences.append(sentence_data)
         return sentences
 
-    @staticmethod
-    async def tokenize(s):
+    async def tokenize(self, s):
         """Function to remove stopwords from a sentence and return a list of words to match"""
-        word_list = re.findall(r'\w+', s.lower())
-        filtered_words = [word for word in word_list if word not in stopwords.words('english')]
-        """Perform NLP Lemmatization and Stemming methods"""
-        lemmed = []
-        stemmer = SnowballStemmer('english')
-        for i in filtered_words:
-            await asyncio.sleep(0.001)
-            lemmed.append(stemmer.stem(str(i)))
-        return ' '.join(lemmed)
+        return ' '.join(token.lemma_ for token in self.nlp(s) if not token.is_stop)
 
     @staticmethod
     async def remove_html_markup_and_found(s):
