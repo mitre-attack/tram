@@ -33,7 +33,7 @@ class MLService:
         for i in tqdm(list_of_sentences):
             #print(i['text'])
             await asyncio.sleep(0.01)
-            labels = model.predict([i['text']])
+            labels = await model.predict([i['text']])
             #print(labels)
             if("NO_TECHNIQUE" in labels[0]):
                 i['ml_techniques_found'] = []

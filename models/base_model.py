@@ -13,6 +13,7 @@ import numpy as np
 
 from tqdm import tqdm
 import logging
+import asyncio
 
 class BaseModel:
     def __init__(self):
@@ -96,7 +97,7 @@ class BaseModel:
         return predicted_labels
 
     def extract_X(self,X):
-        nlp = spacy.load('en_core_web_md')
+        nlp = spacy.load('en_core_web_sm')
         new_X = []
         for i in tqdm(X):
             temp = []
@@ -113,17 +114,21 @@ class BaseModel:
         self.tfid = tfid
         return data
 
-    def extract_X_for_prediction(self,X):
-        nlp = spacy.load('en_core_web_md')
+    async def extract_X_for_prediction(self,X):
+        nlp = spacy.load('en_core_web_sm')
         new_X = []
         for i in tqdm(X):
             temp = []
+            await asyncio.sleep(0.0001)
             for sent in nlp(i).sents:
                 for tok in sent:
+                    await asyncio.sleep(0.0001)
                     if(not tok.is_stop):
                         temp.append(tok.text)
             new_X.append(' '.join(temp))
+        await asyncio.sleep(0.0001)
         all_counts = self.count_vec.transform(new_X)
+        await asyncio.sleep(0.0001)
         return self.tfid.transform(all_counts)
 
     def extract_y(self,y):
@@ -166,11 +171,11 @@ class BaseModel:
         score = f1_score(ext_y,lab,average='weighted')
         print("f1 score on training data: {}".format(score))
 
-    def predict(self,X):
+    async def predict(self,X):
         if(self.model == None):
             print("ERROR: Model needs to be trained first")
             return None
-        ext_X = self.extract_X_for_prediction(X)
+        ext_X = await self.extract_X_for_prediction(X)
         output = self.model.predict(ext_X)
         decoded_output = self.embedding_decode(output,self.rnc)
         full_out = []
