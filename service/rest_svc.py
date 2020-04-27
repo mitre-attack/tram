@@ -19,8 +19,10 @@ class RestService:
         sentence_dict = await self.dao.get('report_sentences', dict(uid=criteria['sentence_id']))
         sentence_to_strip = sentence_dict[0]['text']
         sentence_to_insert = self.web_svc.remove_html_markup_and_found(sentence_to_strip)
+        name_raw = await self.dao.get('attack_uids',dict(uid=criteria['attack_uid']))
+        name = name_raw[0]['name']
         await self.dao.insert('false_negatives', dict(sentence_id=sentence_dict[0]['uid'], uid=criteria['attack_uid'],
-                                                      false_negative=sentence_to_insert))
+                                                      false_negative=sentence_to_insert,labels=name))
         return dict(status='inserted')
 
     async def set_status(self, criteria=None):
@@ -66,22 +68,57 @@ class RestService:
         for tech in techniques:
             name = await self.dao.get('attack_uids', dict(uid=tech['uid']))
             tmp.append(name[0])
+        techniques_2 = await self.dao.get('false_positives',dict(sentence_id=criteria['sentence_id']))
+        for tech in techniques_2:
+            for label in tech['labels'].split('_'):
+                if(label == ''):
+                    continue
+                else:
+                    name = await self.dao.get('attack_uids' ,dict(name=label))
+                    tmp.append(name[0])
         return tmp
 
     async def true_positive(self, criteria=None):
         sentence_dict = await self.dao.get('report_sentences', dict(uid=criteria['sentence_id']))
         sentence_to_insert = await self.web_svc.remove_html_markup_and_found(sentence_dict[0]['text'])
-        await self.dao.insert('true_positives', dict(sentence_id=sentence_dict[0]['uid'], uid=criteria['attack_uid'],
+        known_fps = await self.dao.get('false_positives',dict(sentence_id=sentence_dict[0]['uid']))
+        name_raw = await self.dao.get('attack_uids',dict(uid=criteria['attack_uid']))
+        name = name_raw[0]['name']
+        if(len(known_fps) > 0):
+            uid = known_fps[0]['uid']
+            if(len(known_fps[0]['labels']) > 0):
+                labels = known_fps[0]['labels']
+                labels += '_' + name
+                await self.dao.update('false_positives','uid',uid,dict(labels=labels))
+            else:
+                await self.dao.update('false_positives','uid',uid,dict(labels=name))
+        else:
+            await self.dao.insert('true_positives', dict(sentence_id=sentence_dict[0]['uid'], uid=criteria['attack_uid'],
                                                      true_positive=sentence_to_insert,
-                                                     element_tag=criteria['element_tag']))
+                                                     element_tag=criteria['element_tag'],labels=name))
         return dict(status='inserted')
 
     async def false_positive(self, criteria=None):
         sentence_dict = await self.dao.get('report_sentences', dict(uid=criteria['sentence_id']))
+        check = await self.dao.get('false_positives',dict(sentence_id=sentence_dict[0]['uid']))
         sentence_to_insert = await self.web_svc.remove_html_markup_and_found(sentence_dict[0]['text'])
         last = await self.data_svc.last_technique_check(criteria)
-        await self.dao.insert('false_positives', dict(sentence_id=sentence_dict[0]['uid'], uid=criteria['attack_uid'],
-                                                      false_positive=sentence_to_insert))
+        if(len(check) > 0):
+            labels = check[0]['labels'].split("_")
+            uid = check[0]['uid']
+            name_raw = await self.dao.get('attack_uids',dict(uid=uid))
+            name = name_raw[0]['name']
+            labels = set(labels)
+            labels.discard(name)
+            labels = list(labels)
+            await self.dao.update('false_positives','uid',uid,dict(labels='_'.join(labels)))
+            await self.dao.delete('true_positives',dict(sentence_id=criteria['sentence_id']))
+        else:
+            name_raw = await self.dao.get('attack_uids',dict(uid=criteria['attack_uid']))
+            name = name_raw[0]['name']
+            await self.dao.insert('false_positives', dict(sentence_id=sentence_dict[0]['uid'], uid=criteria['attack_uid'],
+                                                        false_positive=sentence_to_insert,labels=''))
+            await self.dao.delete('true_positives',dict(sentence_id=criteria['sentence_id']))
         return dict(status='inserted', last=last)
 
     async def insert_report(self, criteria=None):
@@ -209,10 +246,12 @@ class RestService:
         sentence_to_insert = await self.web_svc.remove_html_markup_and_found(sentence_dict[0]['text'])
 
         # Insert new row in the true_positives database table to indicate a new confirmed technique
+        name = attack_dict[0]['name']
         await self.dao.insert('true_positives', dict(sentence_id=sentence_dict[0]['uid'],
                                                      uid=criteria['attack_uid'],
                                                      true_positive=sentence_to_insert,
-                                                     element_tag=criteria['element_tag']))
+                                                     element_tag=criteria['element_tag'],
+                                                     labels=name))
 
         # Insert new row in the report_sentence_hits database table to indicate a new confirmed technique
         # This is needed to ensure that requests to get all confirmed techniques works correctly

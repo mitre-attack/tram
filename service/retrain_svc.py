@@ -97,7 +97,7 @@ class RetrainingService:
                 false_positives = loop.run_until_complete(self.dao.get('false_positives'))
                 false_negatives = loop.run_until_complete(self.dao.get('false_negatives'))
                 true_negatives = loop.run_until_complete(self.dao.get('true_negatives'))
-                if(len(true_positives) == 0 or len(true_negatives) == 0): # wait until database is fully populated
+                if(len(true_positives) <= 100 or len(true_negatives) <= 1000): # wait until database is fully populated
                     sleep(60)
                     continue
                 else:
