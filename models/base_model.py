@@ -7,6 +7,8 @@ from sklearn.neighbors import KNeighborsClassifier
 import sklearn.linear_model as lm
 from sklearn.metrics import f1_score
 
+import spacy
+
 import numpy as np
 
 from tqdm import tqdm
@@ -94,16 +96,34 @@ class BaseModel:
         return predicted_labels
 
     def extract_X(self,X):
+        nlp = spacy.load('en_core_web_md')
+        new_X = []
+        for i in tqdm(X):
+            temp = []
+            for sent in nlp(i).sents:
+                for tok in sent:
+                    if(not tok.is_stop):
+                        temp.append(tok.text)
+            new_X.append(' '.join(temp))
         count_vec = CountVectorizer(max_features=2500)
         tfid = TfidfTransformer()
-        all_counts = count_vec.fit_transform(X)
+        all_counts = count_vec.fit_transform(new_X)
         data = tfid.fit_transform(all_counts)
         self.count_vec = count_vec
         self.tfid = tfid
         return data
 
     def extract_X_for_prediction(self,X):
-        all_counts = self.count_vec.transform(X)
+        nlp = spacy.load('en_core_web_md')
+        new_X = []
+        for i in tqdm(X):
+            temp = []
+            for sent in nlp(i).sents:
+                for tok in sent:
+                    if(not tok.is_stop):
+                        temp.append(tok.text)
+            new_X.append(' '.join(temp))
+        all_counts = self.count_vec.transform(new_X)
         return self.tfid.transform(all_counts)
 
     def extract_y(self,y):
