@@ -298,3 +298,32 @@ class DataService:
             except:
                 print(v)
         return list_of_legacy, list_of_techs
+
+    async def build_sentences_for_export(self, report_id):
+        # Get the sentences for the report from the database
+        sentences = await self.dao.get('report_sentences', dict(report_uid=report_id))
+        # For each sentence, get the sentence hits and the confirmed status of the sentence hits
+        for sentence in sentences:
+            # The query to get the sentence hits from the database
+            sentence_id = sentence['uid']
+            hits_join_query = (
+                f"SELECT report_sentence_hits.uid, report_sentence_hits.attack_uid, attack_uids.name, report_sentence_hits.attack_tid, report_sentence_hits.report_uid "
+                f"FROM (report_sentence_hits INNER JOIN attack_uids ON report_sentence_hits.attack_uid = attack_uids.uid) "
+                f"WHERE report_sentence_hits.report_uid = {report_id} AND report_sentence_hits.uid = {sentence_id}")
+            # Get the sentence hits from the database
+            sentence['hits'] = await self.dao.raw_select(hits_join_query)
+            # For each sentence hit, get the confirmed status of the sentence hit
+            for hit in sentence['hits']:
+                # The query to get the confirmed status of the sentence hit
+                attack_uid = hit['attack_uid']
+                true_positives_query = (
+                    f"SELECT uid, sentence_id FROM true_positives WHERE uid = '{attack_uid}' AND sentence_id = {sentence_id} "
+                    f"UNION "
+                    f"SELECT uid, sentence_id FROM false_negatives WHERE uid = '{attack_uid}' AND sentence_id = {sentence_id} ")
+                # Get the confirmed status of the sentence hit
+                if await self.dao.raw_select(true_positives_query):
+                    hit['confirmed'] = 'true'
+                else:
+                    hit['confirmed'] = 'false'
+        # Return the sentences
+        return sentences
