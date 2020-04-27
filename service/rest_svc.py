@@ -176,7 +176,6 @@ class RestService:
                 techniques[row['uid']] = {'id': row['tid'], 'name': row['name'], 'similar_words': [],
                                           'example_uses': tp, 'false_positives': fp}
         try:
-            print("Analyzing report: " + criteria['title'])
             html_data = await self.web_svc.get_url(criteria['url'])
 
             original_html = await self.web_svc.map_all_html(criteria['url'])
@@ -201,7 +200,7 @@ class RestService:
             temp = await self.dao.get('reports',dict(title=criteria['title']))
             criteria['id'] = temp[0]['uid']
             # criteria['id'] = await self.dao.update('reports', dict(title=criteria['title'], url=criteria['url'],current_status="needs_review"))
-            report_id = criteria['id']
+            report_id = criteria['id']            
             for sentence in analyzed_html:
                 if sentence['ml_techniques_found']:
                     await self.ml_svc.ml_techniques_found(report_id, sentence)
@@ -214,20 +213,18 @@ class RestService:
             for element in original_html:
                 html_element = dict(report_uid=report_id, text=element['text'], tag=element['tag'], found_status="false")
                 await self.dao.insert('original_html', html_element)    
-            print("Analyzed report: " + criteria['title'])
             
         except requests.exceptions.TooManyRedirects:
-            print("Unable to process report: " + criteria['title'])
-            await self.dao.delete('report', criteria['id'])
             logging.error("Error: TooManyRedirects thrown trying to get report " + criteria['title'])
+            await self.dao.delete('reports', dict(uid=criteria['id']))
             raise ImportReportError("Unable to process report " + criteria['title'])
         except requests.exceptions.RequestException:
-            await self.dao.delete('report', criteria['id'])
             logging.error("Error: RequestException trying to get report " + criteria['title'])
+            await self.dao.delete('reports', dict(uid=criteria['id']))
             raise ImportReportError("Unable to process report " + criteria['title'])
         except Exception:
-            await self.dao.delete('report', criteria['id'])
             logging.error("Error: Exception thrown processing report " + criteria['title'])
+            await self.dao.delete('reports', dict(uid=criteria['id']))
             raise ImportReportError("Unable to process report " + criteria['title'])
 
     async def missing_technique(self, criteria=None):
