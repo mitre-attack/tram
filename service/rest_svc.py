@@ -29,6 +29,9 @@ class RestService:
         return dict(status="Report status updated to " + criteria['set_status'])
 
     async def delete_report(self, criteria=None):
+        sentences = await self.dao.get('report_sentences', dict(report_uid=criteria['report_id']))
+        for sentence in sentences:
+            await self.remove_sentences(dict(sentence_id=sentence['uid']))
         await self.dao.delete('reports', dict(uid=criteria['report_id']))
         await self.dao.delete('report_sentences', dict(report_uid=criteria['report_id']))
         await self.dao.delete('report_sentence_hits', dict(report_uid=criteria['report_id']))
