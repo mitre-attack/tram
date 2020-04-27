@@ -31,6 +31,9 @@ class RestService:
         return dict(status="Report status updated to " + criteria['set_status'])
 
     async def delete_report(self, criteria=None):
+        sentences = await self.dao.get('report_sentences', dict(report_uid=criteria['report_id']))
+        for sentence in sentences:
+            await self.remove_sentences(dict(sentence_id=sentence['uid']))
         await self.dao.delete('reports', dict(uid=criteria['report_id']))
         await self.dao.delete('report_sentences', dict(report_uid=criteria['report_id']))
         await self.dao.delete('report_sentence_hits', dict(report_uid=criteria['report_id']))
@@ -71,7 +74,7 @@ class RestService:
                 if(label == ''):
                     continue
                 else:
-                    name = await self.dao.get('attack_uids' ,dict())
+                    name = await self.dao.get('attack_uids' ,dict(name=label))
                     tmp.append(name[0])
         return tmp
 
@@ -243,10 +246,12 @@ class RestService:
         sentence_to_insert = await self.web_svc.remove_html_markup_and_found(sentence_dict[0]['text'])
 
         # Insert new row in the true_positives database table to indicate a new confirmed technique
+        name = attack_dict[0]['name']
         await self.dao.insert('true_positives', dict(sentence_id=sentence_dict[0]['uid'],
                                                      uid=criteria['attack_uid'],
                                                      true_positive=sentence_to_insert,
-                                                     element_tag=criteria['element_tag']))
+                                                     element_tag=criteria['element_tag'],
+                                                     labels=name))
 
         # Insert new row in the report_sentence_hits database table to indicate a new confirmed technique
         # This is needed to ensure that requests to get all confirmed techniques works correctly
