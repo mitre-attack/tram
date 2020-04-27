@@ -1,3 +1,4 @@
+import logging
 import json
 import asyncio
 from io import StringIO
@@ -94,9 +95,8 @@ class RestService:
             asyncio.create_task(self.check_queue()) # check queue background task
             await asyncio.sleep(0.01)
         except ImportReportError as err:
-            print("Error: " + err.msg + ": " + criteria['title'])
-            await self.dao.delete('report', err.report_id)
-            return dict(status='error', msg=err.msg + ': ' + criteria['title'])
+            print("Error: " + err.message)
+            return dict(status='error', msg=err.message)
         return dict(status='inserted')
 
     async def insert_csv(self,criteria=None):
@@ -110,9 +110,8 @@ class RestService:
             asyncio.create_task(self.check_queue()) # check queue background task
             await asyncio.sleep(0.01)
         except ImportReportError as err:
-            print("Error: " + err.msg + ": " + criteria['title'])
-            await self.dao.delete('report', err.report_id)
-            return dict(status='error', msg=err.msg + ': ' + criteria['title'])
+            print("Error: " + err.message)
+            return dict(status='error', msg=err.message)
 
     async def check_queue(self):
         '''
@@ -123,6 +122,10 @@ class RestService:
         '''
         for task in range(len(self.resources)):  # check resources for finished tasks
             if self.resources[task].done():
+                exception = self.resources[task].exception()
+                if (exception is not None):
+                    del self.resources[task]  # when task is finished, remove from resource pool
+                    raise exception
                 del self.resources[task]  # delete finished tasks
 
         max_tasks = 1
@@ -132,23 +135,19 @@ class RestService:
                 while len(self.resources) >= max_tasks:  # check resource pool until a task is finished
                     for task in range(len(self.resources)):
                         if self.resources[task].done():
+                            exception = self.resources[task].exception()
+                            if (exception is not None):
+                                del self.resources[task]  # when task is finished, remove from resource pool
+                                raise exception
                             del self.resources[task]  # when task is finished, remove from resource pool
                     await asyncio.sleep(1)  # allow other tasks to run while waiting
                 criteria = await self.queue.get()  # get next task off queue, and run it
-                try:
-                    task = asyncio.create_task(self.start_analysis(criteria))
-                except ImportReportError as err:
-                    raise err
-                else:
-                    self.resources.append(task)
+                task = asyncio.create_task(self.start_analysis(criteria))
+                self.resources.append(task)
             else:
                 criteria = await self.queue.get() # get next task off queue and run it
-                try:
-                    task = asyncio.create_task(self.start_analysis(criteria))
-                except ImportReportError as err:
-                    raise err
-                else:
-                    self.resources.append(task)
+                task = asyncio.create_task(self.start_analysis(criteria))
+                self.resources.append(task)
 
     async def start_analysis(self, criteria=None):
         tech_data = await self.dao.get('attack_uids')
@@ -179,46 +178,57 @@ class RestService:
         try:
             print("Analyzing report: " + criteria['title'])
             html_data = await self.web_svc.get_url(criteria['url'])
-        except (requests.exceptions.TooManyRedirects, requests.exceptions.RequestException):
+
+            original_html = await self.web_svc.map_all_html(criteria['url'])
+
+            article = dict(title=criteria['title'], html_text=html_data)
+            list_of_legacy, list_of_techs = await self.data_svc.ml_reg_split(json_tech)
+
+            true_negatives = await self.ml_svc.get_true_negs()
+            # Here we build the sentence dictionary
+            html_sentences = await self.web_svc.tokenize_sentence(article['html_text'])
+            model_dict = await self.ml_svc.build_pickle_file(list_of_techs, json_tech, true_negatives)
+
+            ml_analyzed_html = await self.ml_svc.analyze_html(list_of_techs, model_dict, html_sentences)
+            regex_patterns = await self.dao.get('regex_patterns')
+            reg_analyzed_html = self.reg_svc.analyze_html(regex_patterns, html_sentences)
+
+            # Merge ML and Reg hits
+            analyzed_html = await self.ml_svc.combine_ml_reg(ml_analyzed_html, reg_analyzed_html)
+
+            # update card to reflect the end of queue
+            await self.dao.update('reports', 'title', criteria['title'], dict(current_status='needs_review'))
+            temp = await self.dao.get('reports',dict(title=criteria['title']))
+            criteria['id'] = temp[0]['uid']
+            # criteria['id'] = await self.dao.update('reports', dict(title=criteria['title'], url=criteria['url'],current_status="needs_review"))
+            report_id = criteria['id']
+            for sentence in analyzed_html:
+                if sentence['ml_techniques_found']:
+                    await self.ml_svc.ml_techniques_found(report_id, sentence)
+                elif sentence['reg_techniques_found']:
+                    await self.reg_svc.reg_techniques_found(report_id, sentence)
+                else:
+                    data = dict(report_uid=report_id, text=sentence['text'], html=sentence['html'], found_status="false")
+                    await self.dao.insert('report_sentences', data)
+
+            for element in original_html:
+                html_element = dict(report_uid=report_id, text=element['text'], tag=element['tag'], found_status="false")
+                await self.dao.insert('original_html', html_element)    
+            print("Analyzed report: " + criteria['title'])
+            
+        except requests.exceptions.TooManyRedirects:
             print("Unable to process report: " + criteria['title'])
-            raise ImportReportError("Unable to process report", criteria['id'])
-
-        original_html = await self.web_svc.map_all_html(criteria['url'])
-
-        article = dict(title=criteria['title'], html_text=html_data)
-        list_of_legacy, list_of_techs = await self.data_svc.ml_reg_split(json_tech)
-
-        true_negatives = await self.ml_svc.get_true_negs()
-        # Here we build the sentence dictionary
-        html_sentences = await self.web_svc.tokenize_sentence(article['html_text'])
-        model_dict = await self.ml_svc.build_pickle_file(list_of_techs, json_tech, true_negatives)
-
-        ml_analyzed_html = await self.ml_svc.analyze_html(list_of_techs, model_dict, html_sentences)
-        regex_patterns = await self.dao.get('regex_patterns')
-        reg_analyzed_html = self.reg_svc.analyze_html(regex_patterns, html_sentences)
-
-        # Merge ML and Reg hits
-        analyzed_html = await self.ml_svc.combine_ml_reg(ml_analyzed_html, reg_analyzed_html)
-
-        # update card to reflect the end of queue
-        await self.dao.update('reports', 'title', criteria['title'], dict(current_status='needs_review'))
-        temp = await self.dao.get('reports',dict(title=criteria['title']))
-        criteria['id'] = temp[0]['uid']
-        # criteria['id'] = await self.dao.update('reports', dict(title=criteria['title'], url=criteria['url'],current_status="needs_review"))
-        report_id = criteria['id']
-        for sentence in analyzed_html:
-            if sentence['ml_techniques_found']:
-                await self.ml_svc.ml_techniques_found(report_id, sentence)
-            elif sentence['reg_techniques_found']:
-                await self.reg_svc.reg_techniques_found(report_id, sentence)
-            else:
-                data = dict(report_uid=report_id, text=sentence['text'], html=sentence['html'], found_status="false")
-                await self.dao.insert('report_sentences', data)
-
-        for element in original_html:
-            html_element = dict(report_uid=report_id, text=element['text'], tag=element['tag'], found_status="false")
-            await self.dao.insert('original_html', html_element)    
-        print("Analyzed report: " + criteria['title'])
+            await self.dao.delete('report', criteria['id'])
+            logging.error("Error: TooManyRedirects thrown trying to get report " + criteria['title'])
+            raise ImportReportError("Unable to process report " + criteria['title'])
+        except requests.exceptions.RequestException:
+            await self.dao.delete('report', criteria['id'])
+            logging.error("Error: RequestException trying to get report " + criteria['title'])
+            raise ImportReportError("Unable to process report " + criteria['title'])
+        except Exception:
+            await self.dao.delete('report', criteria['id'])
+            logging.error("Error: Exception thrown processing report " + criteria['title'])
+            raise ImportReportError("Unable to process report " + criteria['title'])
 
     async def missing_technique(self, criteria=None):
         # Get the attack information for this attack id

@@ -81,8 +81,9 @@ function upload_file(){
 }
 
 function upload_success(data) {
-    if (data.status == "error") {
-        alert("Error: " + data.msg);
+    var json = JSON.parse(data) 
+    if (json.status == "error") {
+        alert("Error: " + json.msg);
     }
 } 
 
