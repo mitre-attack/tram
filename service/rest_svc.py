@@ -213,17 +213,20 @@ class RestService:
             for element in original_html:
                 html_element = dict(report_uid=report_id, text=element['text'], tag=element['tag'], found_status="false")
                 await self.dao.insert('original_html', html_element)    
-            
+        
+        # if an exception is raised during the analysis of the report then
+        # output an error message to the console, delete the report from the database,
+        # and raise an ImportReportError
         except requests.exceptions.TooManyRedirects:
-            logging.error("Error: TooManyRedirects thrown trying to get report " + criteria['title'])
+            logging.error("Error: TooManyRedirects Exception trying to get report: " + criteria['title'])
             await self.dao.delete('reports', dict(uid=criteria['id']))
             raise ImportReportError("Unable to process report " + criteria['title'])
         except requests.exceptions.RequestException:
-            logging.error("Error: RequestException trying to get report " + criteria['title'])
+            logging.error("Error: RequestException trying to get report: " + criteria['title'])
             await self.dao.delete('reports', dict(uid=criteria['id']))
             raise ImportReportError("Unable to process report " + criteria['title'])
         except Exception:
-            logging.error("Error: Exception thrown processing report " + criteria['title'])
+            logging.error("Error: Exception thrown processing report: " + criteria['title'])
             await self.dao.delete('reports', dict(uid=criteria['id']))
             raise ImportReportError("Unable to process report " + criteria['title'])
 
