@@ -80,5 +80,4 @@ CREATE TABLE if not exists original_html (
     tag TEXT,
     found_status TEXT
     );
-
---INSERT INTO regex_patterns (attack_uid, regex_pattern) values ("attack-pattern--01df3350-ce05-4bdf-bdf8-0a919a66d4a8", "sometext.*moretext")
+    
