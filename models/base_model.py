@@ -4,7 +4,7 @@ import networkx as nx
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.neighbors import KNeighborsClassifier
-import sklearn.linear_model as lm
+import sklearn.ensemble as lm
 from sklearn.metrics import f1_score
 
 import spacy
@@ -159,7 +159,7 @@ class BaseModel:
         new_y = self.embedding_encode(ext_y,n2v)
         self.rnc = self.train_embedder(new_y,ext_y)
         X_train = ext_X.toarray()
-        self.model = lm.LinearRegression()
+        self.model = lm.RandomForestRegressor() #.LinearRegression()
         print("base_model: fitting regression model")
         self.model.fit(X_train,new_y)
         print("base_model: regression model fit")
