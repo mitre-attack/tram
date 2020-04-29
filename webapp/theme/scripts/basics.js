@@ -25,7 +25,6 @@ function true_positive(type, id, attack_uid, element_tag){
 
 function false_positive(type, id, attack_uid){
     document.getElementById("sentence-tid" + attack_uid.substr(attack_uid.length - 4)).remove();
-    //$(`#sentence${id}`).removeClass('bg-warning');
     restRequest('POST', {'index':'false_positive', 'sentence_type':type, 'sentence_id':id, 'attack_uid':attack_uid}, show_info);
 }
 
@@ -63,8 +62,6 @@ function submit_report(){
 }
 
 function upload_file(){
-  //var fileName = this.val().split("\\").pop();
-
   console.log(document.getElementById("csv_file"))
   var file = document.getElementById("csv_file").files[0];
   if(file){
