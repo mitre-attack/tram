@@ -1,4 +1,5 @@
 from aiohttp_jinja2 import template, web
+import constants.constants as constant
 import nltk
 import json
 
@@ -59,10 +60,10 @@ class WebAPI:
         :param request: The title of the report information
         :return: dictionary of report data
         """
-        report = await self.dao.get('reports', dict(title=request.match_info.get('file')))
+        report = await self.dao.get(constant.DB_TABLE_REPORTS, dict(title=request.match_info.get('file')))
         sentences = await self.data_svc.build_sentences(report[0]['uid'])
-        attack_uids = await self.dao.get('attack_uids')
-        original_html = await self.dao.get('original_html', dict(report_uid=report[0]['uid']))
+        attack_uids = await self.dao.get(constant.DB_TABLE_ATTACK)
+        original_html = await self.dao.get(constant.DB_TABLE_ORIGINAL_HTML, dict(report_uid=report[0]['uid']))
         final_html = await self.web_svc.build_final_html(original_html, sentences)
         return dict(file=request.match_info.get('file'), title=report[0]['title'], sentences=sentences, attack_uids=attack_uids, original_html=original_html, final_html=final_html)
 
@@ -73,7 +74,7 @@ class WebAPI:
         :return: the layer json
         """        
         # Get the report from the database
-        report = await self.dao.get('reports', dict(title=request.match_info.get('file')))
+        report = await self.dao.get(constant.DB_TABLE_REPORTS, dict(title=request.match_info.get('file')))
 
         # Create the layer name and description
         report_title = report[0]['title']
@@ -118,9 +119,9 @@ class WebAPI:
         :return: response status of function
         """
         # Get the report
-        report = await self.dao.get('reports', dict(title=request.match_info.get('file')))
+        report = await self.dao.get(constant.DB_TABLE_REPORTS, dict(title=request.match_info.get('file')))
         sentences = await self.data_svc.build_sentences(report[0]['uid'])
-        attack_uids = await self.dao.get('attack_uids')
+        attack_uids = await self.dao.get(constant.DB_TABLE_ATTACK)
 
         dd = dict()
         dd['content'] = []
@@ -159,7 +160,7 @@ class WebAPI:
         :return: status of rebuild
         """
         # get techniques from database
-        tech_data = await self.dao.get('attack_uids')
+        tech_data = await self.dao.get(constant.DB_TABLE_ATTACK)
         techniques = {}
         for row in tech_data:
             # skip software for now
@@ -167,13 +168,13 @@ class WebAPI:
                 continue
             else:
                 # query for true positives
-                true_pos = await self.dao.get('true_positives', dict(uid=row['uid']))
+                true_pos = await self.dao.get(constant.DB_TABLE_TRUE_POSITIVES, dict(uid=row['uid']))
                 tp = []
                 for t in true_pos:
                     tp.append(t['true_positive'])
                 # query for false negatives and false positives
-                false_neg = await self.dao.get('false_negatives', dict(uid=row['uid']))
-                false_positives = await self.dao.get('false_positives', dict(uid=row['uid']))
+                false_neg = await self.dao.get(constant.DB_TABLE_FALSE_NEGATIVES, dict(uid=row['uid']))
+                false_positives = await self.dao.get(constant.DB_TABLE_FALSE_POSITIVES, dict(uid=row['uid']))
                 for f in false_neg:
                     tp.append(f['false_negative'])
                 fp = []
@@ -185,7 +186,7 @@ class WebAPI:
 
         # query for true negatives
         true_negatives = []
-        true_negs = await self.dao.get('true_negatives')
+        true_negs = await self.dao.get(constant.DB_TABLE_TRUE_NEGATIVES)
         for i in true_negs:
             true_negatives.append(i['sentence'])
         list_of_legacy, list_of_techs = await self.data_svc.ml_reg_split(techniques)

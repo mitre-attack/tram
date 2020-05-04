@@ -1,5 +1,5 @@
 import re
-
+import constants.constants as constant
 
 class RegService:
 
@@ -39,18 +39,18 @@ class RegService:
         return html_sentences
 
     async def reg_techniques_found(self, report_id, sentence):
-        sentence_id = await self.dao.insert('report_sentences',
+        sentence_id = await self.dao.insert(constant.DB_TABLE_REPORT_SENTENCES,
                                             dict(report_uid=report_id, text=sentence['text'],
                                                  html=sentence['html'], found_status="true"))
         for technique in sentence['reg_techniques_found']:
-            attack_uid = await self.dao.get('attack_uids', dict(name=technique))
+            attack_uid = await self.dao.get(constant.DB_TABLE_ATTACK, dict(name=technique))
             if not attack_uid:
-                attack_uid = await self.dao.get('attack_uids', dict(tid=technique))
+                attack_uid = await self.dao.get(constant.DB_TABLE_ATTACK, dict(tid=technique))
                 if not attack_uid:
-                    attack_uid = await self.dao.get('attack_uids', dict(uid=technique))
+                    attack_uid = await self.dao.get(constant.DB_TABLE_ATTACK, dict(uid=technique))
             attack_technique = attack_uid[0]['uid']
             attack_technique_name = '{} (r)'.format(attack_uid[0]['name'])
             attack_tid = attack_uid[0]['tid']
-            await self.dao.insert('report_sentence_hits',
+            await self.dao.insert(constant.DB_TABLE_REPORT_SENTENCE_HITS,
                                   dict(uid=sentence_id, attack_uid=attack_technique,
                                        attack_technique_name=attack_technique_name, report_uid=report_id, attack_tid = attack_tid))

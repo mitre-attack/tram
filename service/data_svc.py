@@ -1,6 +1,7 @@
 import re
 import json
 import logging
+import constants.constants as constant
 from taxii2client import Collection
 from stix2 import TAXIICollectionSource, Filter
 
@@ -87,31 +88,31 @@ class DataService:
         attack_data = references
         logging.info("Finished...now creating the database.")
 
-        cur_uids = await self.dao.get('attack_uids') if await self.dao.get('attack_uids') else []
+        cur_uids = await self.dao.get(constant.DB_TABLE_ATTACK) if await self.dao.get(constant.DB_TABLE_ATTACK) else []
         cur_items = [i['uid'] for i in cur_uids]
         for k, v in attack_data.items():
             if k not in cur_items:
-                await self.dao.insert('attack_uids', dict(uid=k, description=defang_text(v['description']), tid=v['id'],
+                await self.dao.insert(constant.DB_TABLE_ATTACK, dict(uid=k, description=defang_text(v['description']), tid=v['id'],
                                                           name=v['name']))
                 if 'regex_patterns' in v:
-                    [await self.dao.insert('regex_patterns', dict(uid=k, regex_pattern=defang_text(x))) for x in
+                    [await self.dao.insert(constant.DB_TABLE_REGEX_PATTERNS, dict(uid=k, regex_pattern=defang_text(x))) for x in
                      v['regex_patterns']]
                 if 'similar_words' in v:
-                    [await self.dao.insert('similar_words', dict(uid=k, similar_word=defang_text(x))) for x in
+                    [await self.dao.insert(constant.DB_TABLE_SIMILAR_WORDS, dict(uid=k, similar_word=defang_text(x))) for x in
                      v['similar_words']]
                 if 'false_negatives' in v:
-                    [await self.dao.insert('false_negatives', dict(uid=k, false_negative=defang_text(x))) for x in
+                    [await self.dao.insert(constant.DB_TABLE_FALSE_NEGATIVES, dict(uid=k, false_negative=defang_text(x))) for x in
                      v['false_negatives']]
                 if 'false_positives' in v:
-                    [await self.dao.insert('false_positives', dict(uid=k, false_positive=defang_text(x))) for x in
+                    [await self.dao.insert(constant.DB_TABLE_FALSE_POSITIVES, dict(uid=k, false_positive=defang_text(x))) for x in
                      v['false_positives']]
                 if 'true_positives' in v:
-                    [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x))) for x in
+                    [await self.dao.insert(constant.DB_TABLE_TRUE_POSITIVES, dict(uid=k, true_positive=defang_text(x))) for x in
                      v['true_positives']]
                 if 'example_uses' in v:
-                    [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x))) for x in
+                    [await self.dao.insert(constant.DB_TABLE_TRUE_POSITIVES, dict(uid=k, true_positive=defang_text(x))) for x in
                      v['example_uses']]
-        logging.info('[!] DB Item Count: {}'.format(len(await self.dao.get('attack_uids'))))
+        logging.info('[!] DB Item Count: {}'.format(len(await self.dao.get(constant.DB_TABLE_ATTACK))))
 
     async def insert_attack_json_data(self, buildfile):
         """
@@ -119,7 +120,7 @@ class DataService:
         :param buildfile: Enterprise attack json file to build from
         :return: nil
         """
-        cur_items = [x['uid'] for x in await self.dao.get('attack_uids')]
+        cur_items = [x['uid'] for x in await self.dao.get(constant.DB_TABLE_ATTACK)]
         logging.debug('[#] {} Existing items in the DB'.format(len(cur_items)))
         with open(buildfile, 'r') as infile:
             attack_dict = json.load(infile)
@@ -162,53 +163,45 @@ class DataService:
         to_add = {x: y for x, y in loaded_items.items() if x not in cur_items}
         logging.debug('[#] {} Techniques found that are not in the existing database'.format(len(to_add)))
         for k, v in to_add.items():
-            await self.dao.insert('attack_uids', dict(uid=k, description=defang_text(v['description']), tid=v['id'],
+            await self.dao.insert(constant.DB_TABLE_ATTACK, dict(uid=k, description=defang_text(v['description']), tid=v['id'],
                                                       name=v['name']))
             if 'example_uses' in v:
-                [await self.dao.insert('true_positives', dict(uid=k, true_positive=defang_text(x))) for x in
+                [await self.dao.insert(constant.DB_TABLE_TRUE_POSITIVES, dict(uid=k, true_positive=defang_text(x))) for x in
                  v['example_uses']]
 
     async def status_grouper(self, status):
-        reports = await self.dao.get('reports', dict(current_status=status))
+        reports = await self.dao.get(constant.DB_TABLE_REPORTS, dict(current_status=status))
         for report in reports:
             report.update(dict(link="/edit/{}".format(report['title'])))
         return reports
 
     async def last_technique_check(self, criteria):
-        await self.dao.delete('report_sentence_hits', dict(uid=criteria['sentence_id'], attack_uid=criteria['attack_uid']))
-        number_of_techniques = await self.dao.get('report_sentence_hits', dict(uid=criteria['sentence_id']))
+        await self.dao.delete(constant.DB_TABLE_REPORT_SENTENCE_HITS, dict(uid=criteria['sentence_id'], attack_uid=criteria['attack_uid']))
+        number_of_techniques = await self.dao.get(constant.DB_TABLE_REPORT_SENTENCE_HITS, dict(uid=criteria['sentence_id']))
         if len(number_of_techniques) == 0:
-            await self.dao.update('report_sentences', 'uid', criteria['sentence_id'], dict(found_status='false'))
+            await self.dao.update(constant.DB_TABLE_REPORT_SENTENCES, 'uid', criteria['sentence_id'], dict(found_status='false'))
             return dict(status='true')
         else:
             return dict(status='false', id=criteria['sentence_id'])
 
+
     async def build_sentences(self, report_id):
-        sentences = await self.dao.get('report_sentences', dict(report_uid=report_id))
+        sentences = await self.dao.get(constant.DB_TABLE_REPORT_SENTENCES, dict(report_uid=report_id))
         for sentence in sentences:
-            sentence['hits'] = await self.dao.get('report_sentence_hits', dict(uid=sentence['uid']))
-            if await self.dao.get('true_positives', dict(sentence_id=sentence['uid'])):
+            sentence['hits'] = await self.dao.get(constant.DB_TABLE_REPORT_SENTENCE_HITS, dict(uid=sentence['uid']))
+            if await self.dao.get(constant.DB_TABLE_TRUE_POSITIVES, dict(sentence_id=sentence['uid'])):
                 sentence['confirmed'] = 'true'
             else:
                 sentence['confirmed'] = 'false'
         return sentences
 
     async def get_techniques(self):
-        techniques = await self.dao.get('attack_uids')
+        techniques = await self.dao.get(constant.DB_TABLE_ATTACK)
         return techniques
 
     async def get_confirmed_techniques(self, report_id):
         # The SQL select join query to retrieve the confirmed techniques for the report from the database
-        select_join_query = (
-            f"SELECT report_sentences.uid, report_sentence_hits.attack_uid, report_sentence_hits.report_uid, report_sentence_hits.attack_tid, true_positives.true_positive " 
-            f"FROM ((report_sentences INNER JOIN report_sentence_hits ON report_sentences.uid = report_sentence_hits.uid) " 
-            f"INNER JOIN true_positives ON report_sentence_hits.uid = true_positives.sentence_id AND report_sentence_hits.attack_uid = true_positives.uid) " 
-            f"WHERE report_sentence_hits.report_uid = {report_id} "
-            f"UNION "
-            f"SELECT report_sentences.uid, report_sentence_hits.attack_uid, report_sentence_hits.report_uid, report_sentence_hits.attack_tid, false_negatives.false_negative " 
-            f"FROM ((report_sentences INNER JOIN report_sentence_hits ON report_sentences.uid = report_sentence_hits.uid) " 
-            f"INNER JOIN false_negatives ON report_sentence_hits.uid = false_negatives.sentence_id AND report_sentence_hits.attack_uid = false_negatives.uid) " 
-            f"WHERE report_sentence_hits.report_uid = {report_id}")
+        select_join_query = constant.SQL_SELECT_JOIN_CONFIRMED_TECHNIQUES.format(report_id, report_id)
         # Run the SQL select join query
         hits = await self.dao.raw_select(select_join_query)
         techniques = []
