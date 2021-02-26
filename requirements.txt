@@ -1,4 +1,4 @@
-aiohttp==3.6.2
+aiohttp==3.7.4
 aiohttp-jinja2==1.2.0
 antlr4-python3-runtime==4.7.2
 async-timeout==3.0.1
