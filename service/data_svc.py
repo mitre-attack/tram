@@ -136,6 +136,8 @@ class DataService:
                             # Add in
                             if tid.startswith('T') and not tid.startswith('TA'):
                                 if item['type'] == "attack-pattern":
+                                    if 'description' not in item:
+                                        item['description'] = 'No description'
                                     loaded_items[item['id']] = {'id': tid, 'name': item['name'],
                                                                 'examples': [],
                                                                 'similar_words': [],
