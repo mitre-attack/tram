@@ -1,8 +1,15 @@
 import re
 import json
 import logging
-from taxii2client import Collection
+
 from stix2 import TAXIICollectionSource, Filter
+
+try:
+    # This is the appropriate import for taxii-client v2.x; this might fail in older taxii-client versions
+    from taxii2client.v20 import Collection
+except ModuleNotFoundError:
+    # The original import statement used in case of error
+    from taxii2client import Collection
 
 
 def defang_text(text):

@@ -1,24 +1,21 @@
+import aiohttp_jinja2
+import asyncio
+import jinja2
+import logging
 import os
 import sys
-import asyncio
-import logging
 import yaml
 
-import aiohttp_jinja2
-import jinja2
 from aiohttp import web
-
+from database.dao import Dao
 from handlers.web_api import WebAPI
 from service.data_svc import DataService
-from service.web_svc import WebService
-from service.reg_svc import RegService
 from service.ml_svc import MLService
+from service.reg_svc import RegService
 from service.rest_svc import RestService
+from service.web_svc import WebService
 
-from database.dao import Dao
 
-
-@asyncio.coroutine
 async def background_tasks(taxii_local='online', build=False, json_file=None):
     """
     Function to run background tasks at startup
@@ -42,7 +39,6 @@ async def background_tasks(taxii_local='online', build=False, json_file=None):
             await data_svc.insert_attack_json_data(json_file)
 
 
-@asyncio.coroutine
 async def init(host, port):
     """
     Function to initialize the aiohttp app
@@ -104,7 +100,7 @@ if __name__ == '__main__':
 
         if conf_build:
             if taxii_local == 'local-json' and bool(os.path.isfile(json_file)):
-                logging.debug("Will build model from static file")
+                logging.debug('Will build model from static file')
                 attack_dict = os.path.abspath(json_file)
 
     # Start services and initiate main function

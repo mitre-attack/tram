@@ -189,7 +189,7 @@ class WebAPI:
         for i in true_negs:
             true_negatives.append(i['sentence'])
         list_of_legacy, list_of_techs = await self.data_svc.ml_reg_split(techniques)
-        self.ml_svc.build_pickle_file(self, list_of_techs, techniques, true_negatives, force=True)
+        self.ml_svc.build_pickle_file(list_of_techs, techniques, true_negatives, force=True)
 
         return {'text': 'ML Rebuilt!'}
 
