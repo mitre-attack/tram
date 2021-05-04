@@ -80,6 +80,22 @@ function upload_file(){
   }
 }
 
+function upload_file_txt(){
+  console.log(document.getElementById("txt_file"))
+  var file = document.getElementById("txt_file").files[0];
+  if(file){
+    var reader = new FileReader();
+    reader.readAsText(file, "UTF-8");
+    reader.onload = function(evt){
+      console.log(evt.target.result)
+      restRequest('POST', {'index':'insert_txt','file':evt.target.result,'fileName':file.name},show_info);
+    }
+    reader.onerror = function(evt){
+      alert("Error reading file");
+    }
+  }
+}
+
 function show_dropdown() {
   document.getElementById("myDropdown").classList.toggle("show");
 }

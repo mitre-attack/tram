@@ -11,11 +11,18 @@ import asyncio
 
 class WebService:
 
+    async def map_all_plainText(self, plainText):
+        results = []
+        plainText.split('\n')
+        for line in plainText:
+            results.append(self._construct_text_dict(line, 'p'))
+        return results
+
     async def map_all_html(self, url_input):
+        results, plaintext, htmltext, images, seen_images = [], [], [], [], []
         a = newspaper.Article(url_input, keep_article_html=True)
         a.download()
         a.parse()
-        results, plaintext, htmltext, images, seen_images = [], [], [], [], []
         images = await self._collect_all_images(a.images)
         plaintext = await self._extract_text_as_list(a.text)
         htmltext = await self._extract_html_as_list(a.article_html)

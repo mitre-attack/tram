@@ -136,12 +136,17 @@ class DataService:
                             # Add in
                             if tid.startswith('T') and not tid.startswith('TA'):
                                 if item['type'] == "attack-pattern":
-                                    if 'description' not in item:
-                                        item['description'] = 'No description'
-                                    loaded_items[item['id']] = {'id': tid, 'name': item['name'],
+                                    if 'description' in item:
+                                        loaded_items[item['id']] = {'id': tid, 'name': item['name'],
                                                                 'examples': [],
                                                                 'similar_words': [],
                                                                 'description': item['description'],
+                                                                'example_uses': []}
+                                    else:
+                                        loaded_items[item['id']] = {'id': tid, 'name': item['name'],
+                                                                'examples': [],
+                                                                'similar_words': [],
+                                                                'description': 'Description',
                                                                 'example_uses': []}
                         else:
                             logging.critical('[!] Error: multiple MITRE sources: {} {}'.format(item['id'], items))

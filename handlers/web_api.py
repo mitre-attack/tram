@@ -42,6 +42,7 @@ class WebAPI:
                 false_negative=lambda d: self.rest_svc.false_negative(criteria=d),
                 set_status=lambda d: self.rest_svc.set_status(criteria=d),
                 insert_report=lambda d: self.rest_svc.insert_report(criteria=d),
+                insert_txt=lambda d: self.rest_svc.insert_txt(criteria=d),
                 insert_csv=lambda d: self.rest_svc.insert_csv(criteria=d),
                 remove_sentences=lambda d: self.rest_svc.remove_sentences(criteria=d),
                 delete_report=lambda d: self.rest_svc.delete_report(criteria=d),
