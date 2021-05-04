@@ -52,14 +52,19 @@ function set_status(set_status, file_name){
     restRequest('POST', {'index':'set_status', 'set_status':set_status, 'file_name':file_name}, show_info);
 }
 
-function submit_report(){
-    var url = document.getElementById("url").value.split(",");
-    var title = document.getElementById("title").value.split(",");
-    if(title.length != url.length){
-      alert("Number of urls and titles do not match, please insert same number of comma seperated items.");
-    }else{
-      restRequest('POST', {'index':'insert_report', 'url':url, 'title':title}, show_info);
-    }    
+function submit_report() {
+    // The URL and title field values comma-separated
+    var url = document.getElementById("url");
+    var urls = url.value.split(",");
+    var title = document.getElementById("title");
+    var titles = title.value.split(",");
+    // Notify user that the number of URLs and titles aren't equal
+    if (titles.length != urls.length) {
+      alert("Number of URLs and titles do not match, please insert same number of comma separated items.");
+    // Proceed with submitting if both fields are valid
+    } else if (title.checkValidity() && url.checkValidity()) {
+      restRequest('POST', {'index':'insert_report', 'url':urls, 'title':titles}, show_info);
+    }
 }
 
 function upload_file(){

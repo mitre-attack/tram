@@ -158,7 +158,7 @@ class MLService:
             attack_tid = attack_uid[0]['tid']
             await self.dao.insert('report_sentence_hits',
                                   dict(uid=sentence_id, attack_uid=attack_technique,
-                                       attack_technique_name=attack_technique_name, report_uid=report_id, attack_tid = attack_tid))
+                                       attack_technique_name=attack_technique_name, report_uid=report_id, attack_tid=attack_tid))
 
     async def get_true_negs(self):
         true_negs = await self.dao.get('true_negatives')

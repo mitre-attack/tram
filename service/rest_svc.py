@@ -85,12 +85,12 @@ class RestService:
         # criteria['id'] = await self.dao.insert('reports', dict(title=criteria['title'], url=criteria['url'],
         #                                                       current_status="needs_review"))
         for i in range(len(criteria['title'])):
-            temp_dict = dict(title=criteria['title'][i], url=criteria['url'][i],current_status="queue")
+            temp_dict = dict(title=criteria['title'][i], url=criteria['url'][i], current_status="queue")
             temp_dict['id'] = await self.dao.insert('reports', temp_dict)
             await self.queue.put(temp_dict)
         # criteria = dict(title=criteria['title'], url=criteria['url'],current_status="needs_review")
         # await self.queue.put(criteria)
-        asyncio.create_task(self.check_queue()) # check queue background task
+        asyncio.create_task(self.check_queue())  # check queue background task
         await asyncio.sleep(0.01)
 
     async def insert_csv(self,criteria=None):
@@ -179,7 +179,7 @@ class RestService:
 
         # update card to reflect the end of queue
         await self.dao.update('reports', 'title', criteria['title'], dict(current_status='needs_review'))
-        temp = await self.dao.get('reports',dict(title=criteria['title']))
+        temp = await self.dao.get('reports', dict(title=criteria['title']))
         criteria['id'] = temp[0]['uid']
         # criteria['id'] = await self.dao.update('reports', dict(title=criteria['title'], url=criteria['url'],current_status="needs_review"))
         report_id = criteria['id']
