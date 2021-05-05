@@ -101,6 +101,17 @@ class RestService:
         asyncio.create_task(self.check_queue())
         await asyncio.sleep(0.01)
 
+    async def insert_txt(self,criteria=None):
+        plainText = StringIO(criteria['file'])
+        textMerge = '㈍'.join(plainText.readlines())
+        textMerge = textMerge.replace('‘', '\'').replace('’', '\'').replace('/', '／').replace('\r', '').replace('\t', '    ').replace('\\', '＼').replace('㈍', '\n')
+        titlea = 'PlainText_' + criteria['fileName']
+        temp_dict = dict(title=titlea, url = textMerge, current_status="queue")
+        temp_dict['id'] = await self.dao.insert('reports', temp_dict)
+        await self.queue.put(temp_dict)
+        asyncio.create_task(self.check_queue()) # check queue background task
+        await asyncio.sleep(0.01)
+        
     async def check_queue(self):
         '''
         description: executes as concurrent job, manages taking jobs off the queue and executing them.
@@ -155,14 +166,17 @@ class RestService:
 
                 techniques[row['uid']] = {'id': row['tid'], 'name': row['name'], 'similar_words': [],
                                           'example_uses': tp, 'false_positives': fp}
-
-        html_data = await self.web_svc.get_url(criteria['url'])
-        original_html = await self.web_svc.map_all_html(criteria['url'])
-
-        article = dict(title=criteria['title'], html_text=html_data)
+        original_html = None
+        article = None
         list_of_legacy, list_of_techs = await self.data_svc.ml_reg_split(json_tech)
-
         true_negatives = await self.ml_svc.get_true_negs()
+        if 'PlainText_' in criteria['title'] :
+            original_html = await self.web_svc.map_all_plainText(criteria['url'])
+            article = dict(title=criteria['title'], html_text=criteria['url'])
+        else :
+            html_data = await self.web_svc.get_url(criteria['url'])
+            original_html = await self.web_svc.map_all_html(criteria['url'])
+            article = dict(title=criteria['title'], html_text=html_data)
         # Here we build the sentence dictionary
         html_sentences = await self.web_svc.tokenize_sentence(article['html_text'])
         model_dict = await self.ml_svc.build_pickle_file(list_of_techs, json_tech, true_negatives)
@@ -180,7 +194,7 @@ class RestService:
         criteria['id'] = temp[0]['uid']
         # criteria['id'] = await self.dao.update('reports', dict(title=criteria['title'], url=criteria['url'],current_status="needs_review"))
         report_id = criteria['id']
-        for sentence in analyzed_html:
+        async for sentence in analyzed_html:
             if sentence['ml_techniques_found']:
                 await self.ml_svc.ml_techniques_found(report_id, sentence)
             elif sentence['reg_techniques_found']:
@@ -188,8 +202,7 @@ class RestService:
             else:
                 data = dict(report_uid=report_id, text=sentence['text'], html=sentence['html'], found_status="false")
                 await self.dao.insert('report_sentences', data)
-
-        for element in original_html:
+        async for element in original_html:
             html_element = dict(report_uid=report_id, text=element['text'], tag=element['tag'], found_status="false")
             await self.dao.insert('original_html', html_element)
 
