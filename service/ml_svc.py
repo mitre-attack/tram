@@ -135,7 +135,14 @@ class MLService:
 
     async def analyze_html(self, list_of_techs, model_dict, list_of_sentences):
         for i in list_of_techs:
-            cv, logreg = model_dict[i]
+            # If an older model_dict has been loaded, its keys may be out of sync with list_of_techs
+            try:
+                cv, logreg = model_dict[i]
+            except KeyError:  # Report to user if a model can't be retrieved
+                logging.warning('Technique \'' + i + '\' has no model to analyse with. You can try deleting/moving '
+                                                     'models/model_dict.p to trigger re-build of models.')
+                # Skip this technique and move onto the next one
+                continue
             final_df = await self.analyze_document(cv, logreg, list_of_sentences)
             count = 0
             for vals in final_df['category']:
@@ -151,8 +158,22 @@ class MLService:
                                                  found_status="true"))
         for technique in sentence['ml_techniques_found']:
             attack_uid = await self.dao.get('attack_uids', dict(name=technique))
+            # If the attack cannot be found via the 'name' column, try the 'tid' column
             if not attack_uid:
                 attack_uid = await self.dao.get('attack_uids', dict(tid=technique))
+            # If the attack has still not been retrieved, try searching the similar_words table
+            if not attack_uid:
+                similar_word = await self.dao.get('similar_words', dict(similar_word=technique))
+                # If a similar word was found, use its attack_uid to lookup the attack_uids table
+                if similar_word and similar_word[0] and similar_word[0]['attack_uid']:
+                    attack_uid = await self.dao.get('attack_uids', dict(uid=similar_word[0]['attack_uid']))
+            # If the attack has still not been retrieved, report to user that this cannot be saved against the sentence
+            if not attack_uid:
+                logging.warning(' '.join(('Sentence ID:', str(sentence_id), 'ML Technique:', technique, '- Technique'
+                                          + 'could not be retrieved from the database; cannot save this technique\'s '
+                                            'association with the sentence.')))
+                # Skip this technique and continue with the next one
+                continue
             attack_technique = attack_uid[0]['uid']
             attack_technique_name = '{} (m)'.format(attack_uid[0]['name'])
             attack_tid = attack_uid[0]['tid']
