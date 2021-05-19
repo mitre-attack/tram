@@ -61,7 +61,7 @@ class DataService:
                                    "example_uses": [],
                                    "description": i['description'].replace('<code>', '').replace('</code>', '').replace(
                                        '\n', '').encode('ascii', 'ignore').decode('ascii') if hasattr(i, "description")
-                                        else 'No description provided',
+                                   else 'No description provided',
                                    "similar_words": [i["name"]]}
 
         for i in attack["relationships"]:
@@ -150,7 +150,9 @@ class DataService:
                                     loaded_items[item['id']] = {'id': tid, 'name': item['name'],
                                                                 'examples': [],
                                                                 'similar_words': [],
-                                                                'description': item['description'],
+                                                                'description': item['description']
+                                                                if hasattr(item, 'description')
+                                                                else 'No description provided',
                                                                 'example_uses': []}
                         else:
                             logging.critical('[!] Error: multiple MITRE sources: {} {}'.format(item['id'], items))

@@ -15,8 +15,12 @@ from service.reg_svc import RegService
 from service.rest_svc import RestService
 from service.web_svc import WebService
 
+# The types of sources for building the database
+ONLINE_BUILD_SOURCE = 'taxii-server'
+OFFLINE_BUILD_SOURCE = 'local-json'
 
-async def background_tasks(taxii_local='online', build=False, json_file=None):
+
+async def background_tasks(taxii_local=ONLINE_BUILD_SOURCE, build=False, json_file=None):
     """
     Function to run background tasks at startup
     :param taxii_local: Expects 'online' or 'offline' to specify the build type.
@@ -26,7 +30,7 @@ async def background_tasks(taxii_local='online', build=False, json_file=None):
     """
     if build:
         await data_svc.reload_database()
-        if taxii_local == 'taxii-server':
+        if taxii_local == ONLINE_BUILD_SOURCE:
             try:
                 await data_svc.insert_attack_stix_data()
             except Exception as exc:
@@ -35,7 +39,7 @@ async def background_tasks(taxii_local='online', build=False, json_file=None):
                                  '"-FF" FOR OFFLINE DATABASE BUILDING\n'
                                  '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'.format(exc))
                 sys.exit()
-        elif taxii_local == 'local-json' and json_file:
+        elif taxii_local == OFFLINE_BUILD_SOURCE and json_file:
             await data_svc.insert_attack_json_data(json_file)
 
 
@@ -65,7 +69,7 @@ async def init(host, port):
     await web.TCPSite(runner, host, port).start()
 
 
-def main(host, port, taxii_local=False, build=False, json_file=None):
+def main(host, port, taxii_local=ONLINE_BUILD_SOURCE, build=False, json_file=None):
     """
     Main function to start app
     :param host: Address to reach webserver on
@@ -99,7 +103,7 @@ if __name__ == '__main__':
         attack_dict = None
 
         if conf_build:
-            if taxii_local == 'local-json' and bool(os.path.isfile(json_file)):
+            if taxii_local == OFFLINE_BUILD_SOURCE and bool(os.path.isfile(json_file)):
                 logging.debug('Will build model from static file')
                 attack_dict = os.path.abspath(json_file)
 
