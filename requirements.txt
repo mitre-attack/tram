@@ -38,5 +38,5 @@ stix2-patterns==1.2.1
 taxii2-client==0.5.0
 tinysegmenter==0.3
 tldextract==2.2.2
-urllib3==1.25.7
+urllib3==1.26.5
 yarl==1.4.2
