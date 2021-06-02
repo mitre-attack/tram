@@ -89,15 +89,16 @@ class WebService:
         tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
         html = tokenizer.tokenize(data)
         sentences = []
-        position = 0
         for data in html:
-            position += 1
-            sentence_data = dict()
-            sentence_data['html'] = data
-            sentence_data['text'] = html2text(data)
-            sentence_data['ml_techniques_found'] = []
-            sentence_data['reg_techniques_found'] = []
-            sentences.append(sentence_data)
+            # Further split by break tags as this might misplace highlighting in the front end
+            no_breaks = [x for x in data.split('<br>') if x]
+            for fragment in no_breaks:
+                sentence_data = dict()
+                sentence_data['html'] = fragment
+                sentence_data['text'] = html2text(fragment)
+                sentence_data['ml_techniques_found'] = []
+                sentence_data['reg_techniques_found'] = []
+                sentences.append(sentence_data)
         return sentences
 
     @staticmethod

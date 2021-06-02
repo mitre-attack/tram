@@ -1,5 +1,11 @@
-var sentence_id = 0
+// The current sentence that's selected
+var sentence_id = 0;
+// The html tag of the selected sentence
 var element_clicked_tag = "";
+// A temporarily highlighted sentence
+var tempHighlighted = undefined;
+// The class used for highlighting a sentence
+var highlightClass = "bg-warning";
 
 function restRequest(type, data, callback) {
     $.ajax({
@@ -18,7 +24,7 @@ function remove_sentences(){
 }
 
 function true_positive(type, id, attack_uid, element_tag){
-    $("#sentence" + id).addClass('bg-warning');
+    $("#sentence" + id).addClass(highlightClass);
     restRequest('POST', {'index':'true_positive', 'sentence_type':type, 'sentence_id':id, 'attack_uid':attack_uid, 'element_tag':element_tag}, show_info);
     sentenceContext(id, element_tag, attack_uid)
 }
@@ -31,7 +37,7 @@ function false_positive(type, id, attack_uid){
 
 function false_negative_update(data){
     if (data.last == 'true') {
-            $(`#sentence${data.id}`).removeClass('bg-warning');
+            $(`#sentence${data.id}`).removeClass(highlightClass);
     }
 }
 
@@ -121,31 +127,53 @@ function savedAlert(){
     }
  }
 
-function sentenceContext(data, element_tag, attack_uid){
-    element_clicked_tag = element_tag
+function sentenceContext(data, element_tag, attack_uid) {
+    // Update selected sentence global variables
+    element_clicked_tag = element_tag;
+    sentence_id = data;
+    // Fire off requests to get info on this sentence
     restRequest('POST', {'index':'sentence_context', 'uid': data, 'attack_uid':attack_uid, 'element_tag':element_tag}, updateSentenceContext);
     restRequest('POST', {'index':'confirmed_sentences', 'sentence_id': data, 'element_tag':element_tag}, updateConfirmedContext);
-    sentence_id = data;
 }
 
-function updateSentenceContext(data){
-    $("#tableSentenceInfo tr").remove()
-    $.each(data, function(index, op){
-        td1 = "<td><a href=https://attack.mitre.org/techniques/" + op.attack_tid + " target=_blank>" + op.attack_technique_name + "</a></td>"
-        td2 = `<td><button class='btn btn-success' onclick='true_positive(true_positive, ${op.uid}, \"${op.attack_uid}\", "${op.element_tag}")'>Accept</button></td>`
-        td3 = `<td><button class='btn btn-danger' onclick='false_positive(true_positive, ${op.uid}, \"${op.attack_uid}\")'>Reject</button></td>`
-        tmp = `<tr id="sentence-tid${op.attack_uid.substr(op.attack_uid.length - 4)}">${td1}${td2}${td3}</tr>`
-        $("#tableSentenceInfo").find('tbody').append(tmp);
-    })
+function updateSentenceContext(data) {
+    // If we previously highlighted a sentence before and this is a new sentence, remove the previous highlighting
+    if (tempHighlighted !== undefined && tempHighlighted !== sentence_id) {
+        $("#elmt" + tempHighlighted).removeClass(highlightClass);
+        tempHighlighted = undefined;
+    }
+    // Reset any 'Techniques Found' list
+    $("#tableSentenceInfo tr").remove();
+    // If this sentence has attacks, display the attacks as normal
+    if (data && data.length > 0) {
+        $.each(data, function(index, op) {
+            td1 = "<td><a href=https://attack.mitre.org/techniques/" + op.attack_tid + " target=_blank>" + op.attack_technique_name + "</a></td>";
+            td2 = `<td><button class='btn btn-success' onclick='true_positive(true_positive, ${op.uid}, \"${op.attack_uid}\", "${op.element_tag}")'>Accept</button></td>`;
+            td3 = `<td><button class='btn btn-danger' onclick='false_positive(true_positive, ${op.uid}, \"${op.attack_uid}\")'>Reject</button></td>`;
+            tmp = `<tr id="sentence-tid${op.attack_uid.substr(op.attack_uid.length - 4)}">${td1}${td2}${td3}</tr>`;
+            $("#tableSentenceInfo").find('tbody').append(tmp);
+        });
+    // Else this sentence doesn't have attack data
+    } else {
+        // If the user is clicking on a sentence that's already highlighted, remove the highlighting
+        if ($("#elmt" + sentence_id).hasClass(highlightClass)) {
+            $("#elmt" + sentence_id).removeClass(highlightClass);
+            tempHighlighted = undefined;
+        // else this sentence wasn't highlighted before; add the highlighting
+        } else {
+            $("#elmt" + sentence_id).addClass(highlightClass);
+            tempHighlighted = sentence_id;
+        }
+    }
 }
 
-function updateConfirmedContext(data){
-    $("#confirmedSentenceInfo tr").remove()
-    $.each(data, function(index, op){
+function updateConfirmedContext(data) {
+    $("#confirmedSentenceInfo tr").remove();
+    $.each(data, function(index, op) {
         td1 = "<td>" + op.name + "</td>"
         tmp = "<tr>" + td1 + "</tr>"
         $("#confirmedSentenceInfo").find('tbody').append(tmp);
-    })
+    });
 }
 
 function downloadLayer(data){
@@ -200,5 +228,7 @@ function addMissingTechnique(){
     uid = $("#missingTechniqueSelect :selected").val();
     restRequest('POST', {'index':'missing_technique', 'sentence_id': sentence_id, 'attack_uid':uid, 'element_tag':element_clicked_tag}, show_info);
     restRequest('POST', {'index':'confirmed_sentences', 'sentence_id': sentence_id, 'element_tag':element_clicked_tag}, updateConfirmedContext);
+    // If an attack has been added to a temporarily highlighted sentence, the highlighting isn't temporary anymore
+    tempHighlighted = undefined
 }
 
