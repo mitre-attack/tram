@@ -1,12 +1,26 @@
-import requests
-from nltk.corpus import stopwords
-import re
-import nltk
-import newspaper
-from nltk.stem import SnowballStemmer
-from html2text import html2text
-from bs4 import BeautifulSoup
 import asyncio
+import logging
+import newspaper
+import nltk
+import re
+import requests
+
+from bs4 import BeautifulSoup
+from html2text import html2text
+from nltk.corpus import stopwords
+from nltk.stem import SnowballStemmer
+
+# The different ways a sentence can end
+SENTENCE_DELIMITERS = ['.', '!', '?']
+# A sentence may also have these characters after a delimiter (e.g. end of a quote)
+OPTIONAL_SENTENCE_DELIMITERS = ['"', '\'']
+# Build a regex to detect these delimiters by `([part-1][part-2]?\s)`
+# part-1 -> there must be an occurrence of one of these delimiters
+# part-2 -> optional: there might be an occurrence of one of these delimiters; add ? after this
+# \s -> A space before the next sentence
+# (...) -> using capturing parentheses to store which delimiters occurred for a sentence
+SENTENCE_DELIMITER_REGEX = '([' + ''.join([re.escape(x) for x in SENTENCE_DELIMITERS]) + ']' \
+                           + '[' + ''.join([re.escape(x) for x in OPTIONAL_SENTENCE_DELIMITERS]) + ']?\\s)'
 
 
 class WebService:
@@ -60,6 +74,14 @@ class WebService:
 
     async def build_final_html(self, original_html, sentences):
         final_html = []
+        # Sets for all the sentence uids and for those we have added to final_html
+        all_sentence_uids, seen_uids = set(), set()
+        report_uid = ''
+        # Initially populate all_sentence_uids
+        for sentence in sentences:
+            all_sentence_uids.add(sentence['uid'])
+            report_uid = sentence['report_uid']
+        # Iterate through each html element to match it to its sentence and build final html
         for element in original_html:
             if element['tag'] == 'img' or element['tag'] == 'header':
                 final_element = await self._build_final_image_dict(element)
@@ -67,18 +89,27 @@ class WebService:
                 continue
             # element is a full html element, can contain multiple lines
             # separate by each sentence
-            html_sentences = element['text'].split('. ')
-            html_sentences = await self._restore_periods_on_sentences(html_sentences)
+            html_sentences = re.split(SENTENCE_DELIMITER_REGEX, element['text'])
+            html_sentences = self._restore_periods_on_sentences(html_sentences)
             for single_sentence in html_sentences:
-                ss_found = False
+                # Use first few words to find matches amongst the sentences list
                 words = single_sentence.split(' ')
                 hint = words[0] + ' ' + words[1] + ' ' + words[2] if len(words) > 2 else words[0]
+                # Iterate through sentences to find if the hint is in it and its uid is one not added before
                 for sentence in sentences:
-                    if hint in sentence['text']:
-                        ss_found = True
+                    if hint in sentence['text'] and sentence['uid'] not in seen_uids:
                         final_element = await self._build_final_html_text(sentence, single_sentence, element['tag'])
                         final_html.append(final_element)
+                        seen_uids.add(final_element['uid'])
                         break
+        # Before finishing, we can report if any sentences are missing
+        missing_uids = all_sentence_uids - seen_uids
+        if len(missing_uids) < 5:
+            missing_sentences = [x['text'] for x in sentences if x['uid'] in missing_uids]
+            for missing in missing_sentences:
+                logging.warning('Sentence \'' + missing[:20] + '...\' missing from html.')
+        else:
+            logging.warning(str(len(missing_uids)) + ' sentences missing from html for report ' + str(report_uid) + '.')
         return final_html
 
     @staticmethod
@@ -211,13 +242,34 @@ class WebService:
         return res_dict
 
     @staticmethod
-    async def _restore_periods_on_sentences(sentence_list):
+    def _restore_periods_on_sentences(sentence_list):
         sen_len = len(sentence_list)
-        if sen_len == 1: 
+        # If the list is length 0 or 1, return as is
+        if sen_len < 2:
             return sentence_list
-        else: 
+        else:
+            # The last sentence will have the period already there
             last = sentence_list[-1]
-            sentence_list = [sentence_list[i] + "." for i in range(sen_len-1)]
-            sentence_list.append(last)
-            return sentence_list
-
+            new_sentence_list = []
+            """
+            Every sentence (apart from the last) will have its period in the neighbouring element.
+            This is because SENTENCE_DELIMITER_REGEX uses capturing brackets hence the pattern causing the split
+            e.g. '.' will be an element in sentence_list. Therefore this means sentence_list will have an odd number 
+            of elements: for x sentences, sentence_list will have 2x elements (original element plus neighbouring 
+            element for period) + 1 (plus 1 for last element with its period already there). 
+            2x + 1 will always be odd.
+            If for any reason sen_len is not odd, something has gone wrong -> report as a warning and add periods 
+            back to the sentences the old way.
+            """
+            if sen_len % 2 == 0:
+                logging.warning('Restored periods on sentence \'' + sentence_list[0][:20]
+                                + '...\' did not work as expected. This may not load properly.')
+                # Add a '.' to each sentence
+                new_sentence_list = [sentence_list[i] + '.' for i in range(sen_len-1)]
+            else:
+                # Else concatenate the sentence with its neighbouring element to include its period
+                for i in range(0, sen_len-1, 2):
+                    new_sentence_list.append(sentence_list[i] + sentence_list[i+1].strip())
+            # Finally, add the last element that didn't need concatenation
+            new_sentence_list.append(last)
+            return new_sentence_list
