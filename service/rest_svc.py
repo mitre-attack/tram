@@ -167,7 +167,7 @@ class RestService:
 
         true_negatives = await self.ml_svc.get_true_negs()
         # Here we build the sentence dictionary
-        html_sentences = await self.web_svc.tokenize_sentence(article['html_text'])
+        html_sentences = self.web_svc.tokenize_sentence(article['html_text'])
         model_dict = await self.ml_svc.build_pickle_file(list_of_techs, json_tech, true_negatives)
 
         ml_analyzed_html = await self.ml_svc.analyze_html(list_of_techs, model_dict, html_sentences)
