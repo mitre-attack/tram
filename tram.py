@@ -51,6 +51,9 @@ async def init(host, port):
     :param port: Port to listen on
     :return: nil
     """
+    # We want nltk packs downloaded before startup; not run concurrently with startup
+    await ml_svc.check_nltk_packs()
+
     logging.info('server starting: %s:%s' % (host, port))
     app = web.Application()
 
@@ -80,7 +83,6 @@ def main(host, port, taxii_local=ONLINE_BUILD_SOURCE, build=False, json_file=Non
     """
     loop = asyncio.get_event_loop()
     loop.create_task(background_tasks(taxii_local=taxii_local, build=build, json_file=json_file))
-    loop.create_task(ml_svc.check_nltk_packs())
     loop.run_until_complete(init(host, port))
     try:
         loop.run_forever()

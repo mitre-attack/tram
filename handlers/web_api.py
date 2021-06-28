@@ -5,14 +5,12 @@ import json
 class WebAPI:
 
     def __init__(self, services):
-
         self.dao = services.get('dao')
         self.data_svc = services['data_svc']
         self.web_svc = services['web_svc']
         self.ml_svc = services['ml_svc']
         self.reg_svc = services['reg_svc']
         self.rest_svc = services['rest_svc']
-        self.tokenizer_sen = self.web_svc.tokenizer_sen
 
     @template('about.html')
     async def about(self, request):
@@ -191,5 +189,3 @@ class WebAPI:
         self.ml_svc.build_pickle_file(list_of_techs, techniques, true_negatives, force=True)
 
         return {'text': 'ML Rebuilt!'}
-
-
