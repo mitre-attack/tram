@@ -1,7 +1,9 @@
-import json
 import asyncio
-from io import StringIO
+import json
 import pandas as pd
+
+from io import StringIO
+
 
 class RestService:
 
@@ -83,12 +85,12 @@ class RestService:
         # criteria['id'] = await self.dao.insert('reports', dict(title=criteria['title'], url=criteria['url'],
         #                                                       current_status="needs_review"))
         for i in range(len(criteria['title'])):
-            temp_dict = dict(title=criteria['title'][i], url=criteria['url'][i],current_status="queue")
+            temp_dict = dict(title=criteria['title'][i], url=criteria['url'][i], current_status="queue")
             temp_dict['id'] = await self.dao.insert('reports', temp_dict)
             await self.queue.put(temp_dict)
         # criteria = dict(title=criteria['title'], url=criteria['url'],current_status="needs_review")
         # await self.queue.put(criteria)
-        asyncio.create_task(self.check_queue()) # check queue background task
+        asyncio.create_task(self.check_queue())  # check queue background task
         await asyncio.sleep(0.01)
 
     async def insert_csv(self,criteria=None):
@@ -102,12 +104,12 @@ class RestService:
         await asyncio.sleep(0.01)
 
     async def check_queue(self):
-        '''
+        """
         description: executes as concurrent job, manages taking jobs off the queue and executing them.
         If a job is already being processed, wait until that job is done, then execute next job on queue.
         input: nil
         output: nil
-        '''
+        """
         for task in range(len(self.resources)):  # check resources for finished tasks
             if self.resources[task].done():
                 del self.resources[task]  # delete finished tasks
@@ -131,7 +133,8 @@ class RestService:
 
     async def start_analysis(self, criteria=None):
         tech_data = await self.dao.get('attack_uids')
-        json_tech = json.load(open("models/attack_dict.json", "r", encoding="utf_8"))
+        with open('models/attack_dict.json', 'r', encoding='utf_8') as attack_dict_f:
+            json_tech = json.load(attack_dict_f)
         techniques = {}
         for row in tech_data:
             await asyncio.sleep(0.01)
@@ -164,7 +167,7 @@ class RestService:
 
         true_negatives = await self.ml_svc.get_true_negs()
         # Here we build the sentence dictionary
-        html_sentences = await self.web_svc.tokenize_sentence(article['html_text'])
+        html_sentences = self.web_svc.tokenize_sentence(article['html_text'])
         model_dict = await self.ml_svc.build_pickle_file(list_of_techs, json_tech, true_negatives)
 
         ml_analyzed_html = await self.ml_svc.analyze_html(list_of_techs, model_dict, html_sentences)
@@ -176,7 +179,7 @@ class RestService:
 
         # update card to reflect the end of queue
         await self.dao.update('reports', 'title', criteria['title'], dict(current_status='needs_review'))
-        temp = await self.dao.get('reports',dict(title=criteria['title']))
+        temp = await self.dao.get('reports', dict(title=criteria['title']))
         criteria['id'] = temp[0]['uid']
         # criteria['id'] = await self.dao.update('reports', dict(title=criteria['title'], url=criteria['url'],current_status="needs_review"))
         report_id = criteria['id']

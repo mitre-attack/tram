@@ -1,8 +1,11 @@
 ---
 
+# Specified host and port where tram will run
 host: 0.0.0.0
 port: 9999
+# Either 'taxii-server' for latest data or 'local-json' to use local data (data from json_file)
 taxii-local: taxii-server
+# If you would like the database to be re-built on launch of tram
 build: True
+# The JSON file containing attack data; ensure file is in /models directory
 json_file: enterprise-attack.json
-

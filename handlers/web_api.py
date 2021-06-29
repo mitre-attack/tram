@@ -1,19 +1,16 @@
 from aiohttp_jinja2 import template, web
-import nltk
 import json
 
 
 class WebAPI:
 
     def __init__(self, services):
-
         self.dao = services.get('dao')
         self.data_svc = services['data_svc']
         self.web_svc = services['web_svc']
         self.ml_svc = services['ml_svc']
         self.reg_svc = services['reg_svc']
         self.rest_svc = services['rest_svc']
-        self.tokenizer_sen = nltk.data.load('tokenizers/punkt/english.pickle')
 
     @template('about.html')
     async def about(self, request):
@@ -189,8 +186,6 @@ class WebAPI:
         for i in true_negs:
             true_negatives.append(i['sentence'])
         list_of_legacy, list_of_techs = await self.data_svc.ml_reg_split(techniques)
-        self.ml_svc.build_pickle_file(self, list_of_techs, techniques, true_negatives, force=True)
+        self.ml_svc.build_pickle_file(list_of_techs, techniques, true_negatives, force=True)
 
         return {'text': 'ML Rebuilt!'}
-
-

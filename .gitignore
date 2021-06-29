@@ -1,0 +1,7 @@
+# Python cache
+__pycache__/
+# Local database
+database/tram.db
+
+# IDEs
+.idea/

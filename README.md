@@ -7,6 +7,9 @@ Threat Report ATT&CK<sup>®</sup> Mapping (TRAM) is a tool to aid analyst in map
 - Google Chrome is our only supported/tested browser
 
 ## Installation
+
+Please note: if your environment has multiple Python interpreters (e.g. `python` is for Python 2.x and `python3` is for Python 3.x, please adjust some of the commands below accordingly. For example, `pip` may be `python3 -m pip install ...` and `python tram.py` may be `python3 tram.py`). 
+
 Start by cloning this repository.
 ```
 git clone https://github.com/mitre-attack/tram.git

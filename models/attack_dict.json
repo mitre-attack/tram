@@ -330,7 +330,7 @@
       "has been known to dump credentials."
     ],
     "id": "T1003",
-    "name": "Credential Dumping",
+    "name": "OS Credential Dumping",
     "similar_words": [
       "Credential Dumping"
     ]
@@ -1248,7 +1248,7 @@
       "used SMTP as a communication channel in various implants, initially using self-registered Google Mail accounts and later compromised email servers of its victims. Later implants such as  use a blend of HTTP and other legitimate channels, depending on module configuration."
     ],
     "id": "T1071",
-    "name": "Standard Application Layer Protocol",
+    "name": "Application Layer Protocol",
     "similar_words": [
       "Standard Application Layer Protocol"
     ]
@@ -2820,7 +2820,7 @@
       "Malware used by  can run commands on the command-line interface."
     ],
     "id": "T1059",
-    "name": "Command-Line Interface",
+    "name": "Command and Scripting Interpreter",
     "similar_words": [
       "Command-Line Interface"
     ]
@@ -3423,7 +3423,7 @@
       "transferred compressed and encrypted RAR files containing exfiltration through the established backdoor command and control channel during operations."
     ],
     "id": "T1041",
-    "name": "Exfiltration Over Command and Control Channel",
+    "name": "Exfiltration Over C2 Channel",
     "similar_words": [
       "Exfiltration Over Command and Control Channel"
     ]
@@ -4961,7 +4961,7 @@
       "has downloaded additional files, including by using a first-stage downloader to contact the C2 server to obtain the second-stage implant."
     ],
     "id": "T1105",
-    "name": "Remote File Copy",
+    "name": "Ingress Tool Transfer",
     "similar_words": [
       "Remote File Copy"
     ]

@@ -1,15 +1,28 @@
-import requests
-from nltk.corpus import stopwords
-import re
-import nltk
-import newspaper
-from nltk.stem import SnowballStemmer
-from html2text import html2text
-from bs4 import BeautifulSoup
 import asyncio
+import newspaper
+import nltk
+import re
+import requests
+
+from bs4 import BeautifulSoup
+from html2text import html2text
+from nltk.corpus import stopwords
+from nltk.stem import SnowballStemmer
+
+# Abbreviated words for sentence-splitting
+ABBREVIATIONS = {'dr', 'vs', 'mr', 'mrs', 'ms', 'prof', 'inc', 'fig', 'e.g', 'i.e', 'u.s'}
 
 
 class WebService:
+    def __init__(self):
+        self.tokenizer_sen = None
+
+    def initialise_tokenizer(self):
+        self.tokenizer_sen = nltk.data.load('tokenizers/punkt/english.pickle')
+        try:
+            self.tokenizer_sen._params.abbrev_types.update(ABBREVIATIONS)
+        except AttributeError:
+            pass
 
     async def map_all_html(self, url_input):
         a = newspaper.Article(url_input, keep_article_html=True)
@@ -60,44 +73,70 @@ class WebService:
 
     async def build_final_html(self, original_html, sentences):
         final_html = []
+        # A list where final_html_sentence_idxs[x] = y means final_html[x] contains data for sentences[y]
+        final_html_sentence_idxs = []
+        # Set for all the sentence index positions we have added to final_html
+        seen_sentence_idxs = set()
+        # Iterate through each html element to match it to its sentence and build final html
         for element in original_html:
             if element['tag'] == 'img' or element['tag'] == 'header':
                 final_element = await self._build_final_image_dict(element)
                 final_html.append(final_element)
+                # This isn't a sentence but reflect something has been added to final_html by adding -1
+                final_html_sentence_idxs.append(-1)
                 continue
             # element is a full html element, can contain multiple lines
             # separate by each sentence
-            html_sentences = element['text'].split('. ')
-            html_sentences = await self._restore_periods_on_sentences(html_sentences)
+            html_sentences = self.tokenizer_sen.tokenize(element['text'])
             for single_sentence in html_sentences:
-                ss_found = False
+                # Use first few words to find matches amongst the sentences list
                 words = single_sentence.split(' ')
                 hint = words[0] + ' ' + words[1] + ' ' + words[2] if len(words) > 2 else words[0]
-                for sentence in sentences:
-                    if hint in sentence['text']:
-                        ss_found = True
-                        final_element = await self._build_final_html_text(sentence, single_sentence, element['tag'])
+                # Iterate through sentences to find if the hint is in it and the sentence is one not added before
+                for s_idx, sentence in enumerate(sentences):
+                    if hint in sentence['text'] and s_idx not in seen_sentence_idxs:
+                        final_element = self._build_final_html_text(sentence, single_sentence, element['tag'])
                         final_html.append(final_element)
+                        # Make note of the index position in sentences has been added to final_html
+                        final_html_sentence_idxs.append(s_idx)
+                        seen_sentence_idxs.add(s_idx)
                         break
+        # Before finishing, we can add any missing sentences
+        # All possible sentence index positions
+        all_sentence_idxs = set(range(len(sentences)))
+        # Missing position positions = all minus seen
+        missing_sentence_idxs = sorted(all_sentence_idxs - seen_sentence_idxs)
+        # Go through each missing index position
+        for sen_idx in missing_sentence_idxs:
+            try:
+                # Get the position in final_html of sentences[sen_idx-1] and +1 to add after previous sentence
+                insert_pos = final_html_sentence_idxs.index(max(0, sen_idx - 1)) + 1
+            except ValueError:  # case where missing sentence is first sentence so we'll insert at index 0
+                insert_pos = 0
+            # Build element dictionary for this sentence
+            missing_elem = self._build_final_html_text(sentences[sen_idx], sentences[sen_idx]['text'], 'p')
+            # Insert it into final_html
+            final_html[insert_pos:0] = [missing_elem]
+            # Update corresponding final_html_sentence_idxs to state where this sen_idx now is
+            final_html_sentence_idxs[insert_pos:0] = [sen_idx]
         return final_html
 
-    @staticmethod
-    async def tokenize_sentence(data):
+    def tokenize_sentence(self, data):
         """
         :criteria: expects a dictionary of this structure:
         """
-        tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
-        html = tokenizer.tokenize(data)
+        html = self.tokenizer_sen.tokenize(data)
         sentences = []
-        position = 0
-        for data in html:
-            position += 1
-            sentence_data = dict()
-            sentence_data['html'] = data
-            sentence_data['text'] = html2text(data)
-            sentence_data['ml_techniques_found'] = []
-            sentence_data['reg_techniques_found'] = []
-            sentences.append(sentence_data)
+        for current in html:
+            # Further split by break tags as this might misplace highlighting in the front end
+            no_breaks = [x for x in current.split('<br>') if x]
+            for fragment in no_breaks:
+                sentence_data = dict()
+                sentence_data['html'] = fragment
+                sentence_data['text'] = html2text(fragment)
+                sentence_data['ml_techniques_found'] = []
+                sentence_data['reg_techniques_found'] = []
+                sentences.append(sentence_data)
         return sentences
 
     @staticmethod
@@ -154,7 +193,7 @@ class WebService:
 
 
     @staticmethod
-    async def _build_final_html_text(sentence, single_sentence, tag):
+    def _build_final_html_text(sentence, single_sentence, tag):
         final_element = dict()
         final_element['uid'] = sentence['uid']
         final_element['text'] = single_sentence
@@ -208,15 +247,3 @@ class WebService:
         res_dict['ml_techniques_found'] = []
         res_dict['res_techniques_found'] = []
         return res_dict
-
-    @staticmethod
-    async def _restore_periods_on_sentences(sentence_list):
-        sen_len = len(sentence_list)
-        if sen_len == 1: 
-            return sentence_list
-        else: 
-            last = sentence_list[-1]
-            sentence_list = [sentence_list[i] + "." for i in range(sen_len-1)]
-            sentence_list.append(last)
-            return sentence_list
-
