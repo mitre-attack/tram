@@ -1,6 +1,6 @@
 var sentence_id = 0
 var element_clicked_tag = "";
-
+		
 function restRequest(type, data, callback) {
     $.ajax({
        url: '/rest',
@@ -64,34 +64,31 @@ function submit_report(){
 
 function upload_file(){
   //var fileName = this.val().split("\\").pop();
-
-  console.log(document.getElementById("csv_file"))
-  var file = document.getElementById("csv_file").files[0];
+  console.log(document.getElementById("filePath"));
+  var file = document.getElementById("filePath").files[0];
   if(file){
+    var fileExtends = file.name.slice((file.name.lastIndexOf(".") - 1 >>> 0) + 2);
     var reader = new FileReader();
-    reader.readAsText(file, "UTF-8");
-    reader.onload = function(evt){
-      console.log(evt.target.result)
-      restRequest('POST', {'index':'insert_csv','file':evt.target.result},show_info);
-    }
     reader.onerror = function(evt){
       alert("Error reading file");
     }
-  }
-}
-
-function upload_file_txt(){
-  console.log(document.getElementById("txt_file"))
-  var file = document.getElementById("txt_file").files[0];
-  if(file){
-    var reader = new FileReader();
-    reader.readAsText(file, "UTF-8");
-    reader.onload = function(evt){
-      console.log(evt.target.result)
-      restRequest('POST', {'index':'insert_txt','file':evt.target.result,'fileName':file.name},show_info);
-    }
-    reader.onerror = function(evt){
-      alert("Error reading file");
+    if (fileExtends === "txt") {
+      reader.readAsText(file, "UTF-8");
+      reader.onload = function(evt){
+        console.log("TXT upload");
+        console.log(evt.target.result)
+        restRequest('POST', {'index':'insert_txt','file':evt.target.result,'fileName':file.name},show_info);
+      }
+    } else if (fileExtends === "pdf") {
+		alert("[참고] PDF 파일은 레이블링이 완료된 CTI 문서만 분석 가능합니다!");
+		console.log(file.name);
+		restRequest('POST', {'index':'insert_pdf', 'fileName':file.name},show_info);
+    } else if (fileExtends === "csv") {
+      reader.readAsText(file, "UTF-8");
+      reader.onload = function(evt){
+        console.log(evt.target.result)
+        restRequest('POST', {'index':'insert_csv','file':evt.target.result},show_info);
+      }
     }
   }
 }

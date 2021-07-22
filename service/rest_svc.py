@@ -1,7 +1,10 @@
 import json
 import asyncio
-from io import StringIO
 import pandas as pd
+from io import StringIO
+from pdfminer.high_level import extract_text
+
+import logging
 
 class RestService:
 
@@ -111,7 +114,29 @@ class RestService:
         await self.queue.put(temp_dict)
         asyncio.create_task(self.check_queue()) # check queue background task
         await asyncio.sleep(0.01)
+
+    async def writeFile(fileName, binaryData):
+        with open(fileName, 'wb') as f:
+            f.write(base64.b64decode(binaryData.split(',')[1]))
         
+    async def insert_pdf(self,criteria=None):
+        plainText = await self.readPdf("./PDF/" + criteria['fileName'])
+        textMerge = plainText.replace('‘', '\'').replace('’', '\'').replace('/', '／').replace('\r', '').replace('\t', ' ').replace('\\', '＼').replace('\n', ' ').replace('  ', ' ').replace('. ', '.\n')
+        titlea = 'PlainText_' + criteria['fileName']
+        temp_dict = dict(title=titlea, url = textMerge, current_status="queue")
+        temp_dict['id'] = await self.dao.insert('reports', temp_dict)
+        await self.queue.put(temp_dict)
+        asyncio.create_task(self.check_queue())
+        await asyncio.sleep(0.01)
+        
+    async def readPdf(self, path):
+        text = None
+        try:
+            text = extract_text(path)
+        except:
+            pass
+        return text
+
     async def check_queue(self):
         '''
         description: executes as concurrent job, manages taking jobs off the queue and executing them.
@@ -194,7 +219,7 @@ class RestService:
         criteria['id'] = temp[0]['uid']
         # criteria['id'] = await self.dao.update('reports', dict(title=criteria['title'], url=criteria['url'],current_status="needs_review"))
         report_id = criteria['id']
-        async for sentence in analyzed_html:
+        for sentence in analyzed_html:
             if sentence['ml_techniques_found']:
                 await self.ml_svc.ml_techniques_found(report_id, sentence)
             elif sentence['reg_techniques_found']:
@@ -202,7 +227,7 @@ class RestService:
             else:
                 data = dict(report_uid=report_id, text=sentence['text'], html=sentence['html'], found_status="false")
                 await self.dao.insert('report_sentences', data)
-        async for element in original_html:
+        for element in original_html:
             html_element = dict(report_uid=report_id, text=element['text'], tag=element['tag'], found_status="false")
             await self.dao.insert('original_html', html_element)
 
