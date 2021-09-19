@@ -2,6 +2,16 @@
 
 Threat Report ATT&CK<sup>®</sup> Mapping (TRAM) is a tool to aid analyst in mapping finished reports to ATT&CK. TRAM is currently in its beta phase and is actively being developed.
 ​
+
+## Quick run with Docker
+
+In order to run the application in detached mode on port 80 execute following command:
+
+```
+docker run -d -p 80:9999 1402/mitre-attack-tram:latest
+
+```
+
 ## Requirements
 - [python3](https://www.python.org/) (3.7+)
 - Google Chrome is our only supported/tested browser
